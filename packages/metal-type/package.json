@@ -1,0 +1,22 @@
+{
+    "name": "metal-type",
+    "version": "0.1.0",
+    "description": "Validate type-safe schema with metal-confidence",
+    "author": "danpacho",
+    "license": "MIT",
+    "keywords": [],
+    "sideEffects": false,
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "dist"
+    ],
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "tsup src/index.ts --format=cjs,esm --dts",
+        "build:fast": "tsup src/index.ts --format=cjs,esm"
+    }
+}
