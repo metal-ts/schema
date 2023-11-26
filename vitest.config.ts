@@ -5,6 +5,8 @@ import { defineConfig } from "vitest/config"
 export default defineConfig({
     root: process.cwd(),
     plugins: [tsconfigPaths()],
-    test: {},
+    test: {
+        root: "packages",
+    },
     resolve: {},
 })
