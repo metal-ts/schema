@@ -3,6 +3,7 @@ import { type MetalCause, MetalError } from "../error"
 import { SchemaErrorStack } from "../error/schema.error.stack"
 import type { Infer } from "../interface/infer"
 import type { TOTAL_TYPE_UNIT_NAMES } from "../interface/type"
+import { prettyPrint } from "../utils"
 
 export type ValidationUnit<ValidationTarget> = (
     target: ValidationTarget,
@@ -82,16 +83,12 @@ export abstract class TypescriptFeatures {
 /**
  * @description Schema core
  */
-export class Schema<
-    Name extends TOTAL_TYPE_UNIT_NAMES,
-    InputType,
-    OutputType = InputType,
-> {
+export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     public constructor(
         private readonly _name: Name,
         protected readonly internalValidator: ValidationUnit<unknown>,
         private readonly _label?: string,
-        protected transformer?: Transformer<InputType, OutputType>
+        protected transformer?: Transformer<Input, Output>
     ) {
         this.$errorStack = new SchemaErrorStack()
     }
@@ -105,7 +102,7 @@ export class Schema<
     public get type(): Lowercase<Name> {
         return this._name.toLowerCase() as Lowercase<Name>
     }
-    public defaultValue?: Infer<InputType> | null = null
+    public defaultValue?: Infer<Input> | null = null
     protected $errorStack: SchemaErrorStack
     /**
      * @description Inject external error manager
@@ -126,13 +123,12 @@ export class Schema<
         this.$errorStack = externalErrorStack
     }
 
-    private readonly validationPipes: Array<ValidationUnit<Infer<InputType>>> =
-        []
+    private readonly validationPipes: Array<ValidationUnit<Infer<Input>>> = []
     private get shouldPerformCustomValidation(): boolean {
         return this.validationPipes.length > 0
     }
 
-    private passValidationPipes(target: Infer<InputType>): void {
+    private passValidationPipes(target: Infer<Input>): void {
         const isPassingPipe: boolean = this.validationPipes
             .map((pipe) => pipe(target, this.$errorStack))
             .every(Boolean)
@@ -147,7 +143,7 @@ export class Schema<
         }
     }
 
-    private performValidate(target: unknown): Infer<InputType> {
+    private performValidate(target: unknown): Infer<Input> {
         if (!this.internalValidator(target, this.$errorStack)) {
             throw new MetalError({
                 code: "VALIDATION",
@@ -157,10 +153,9 @@ export class Schema<
         }
 
         if (this.shouldPerformCustomValidation)
-            this.passValidationPipes(target as Infer<InputType>)
+            this.passValidationPipes(target as Infer<Input>)
 
-        //TODO: 에러 메세지 다음거에 영향 미치는가 >> this.$errorStack.reset()
-        return target as Infer<InputType>
+        return target as Infer<Input>
     }
 
     protected createOptional<SchemaInstance extends SchemaShape>(
@@ -244,8 +239,8 @@ export class Schema<
      * @param transformer transformation function
      */
     public transform<NewOutput>(
-        transformer: Transformer<OutputType, NewOutput>
-    ): Schema<`${Name} - TRANSFORMED`, OutputType, NewOutput> {
+        transformer: Transformer<Output, NewOutput>
+    ): Schema<`${Name} - TRANSFORMED`, Output, NewOutput> {
         return new Schema(
             `${this._name} - TRANSFORMED` as `${Name} - TRANSFORMED`,
             this.internalValidator,
@@ -260,15 +255,15 @@ export class Schema<
      */
     public transformHard<TransformSchema extends SchemaShape>(
         schemaTransformer: HardTransformer<
-            Schema<Name, InputType, OutputType>,
+            Schema<Name, Input, Output>,
             TransformSchema
         >
     ): TransformSchema {
         return schemaTransformer(this.clone())
     }
 
-    private processTransformation(input: Infer<InputType>): Infer<OutputType> {
-        if (!this.transformer) return input as Infer<OutputType>
+    private processTransformation(input: Infer<Input>): Infer<Output> {
+        if (!this.transformer) return input as Infer<Output>
 
         try {
             const transformerSchema = this.transformer(input, this.$errorStack)
@@ -276,7 +271,7 @@ export class Schema<
             if (transformerSchema instanceof Schema)
                 return transformerSchema.parse(input)
 
-            return transformerSchema as Infer<OutputType>
+            return transformerSchema as Infer<Output>
         } catch (e) {
             if (e instanceof MetalError) {
                 throw e
@@ -292,7 +287,7 @@ export class Schema<
     /**
      * @description clone schema
      */
-    public clone(): Schema<Name, InputType, OutputType> {
+    public clone(): Schema<Name, Input, Output> {
         this.$errorStack.reset()
 
         return new Schema(
@@ -308,8 +303,8 @@ export class Schema<
      * @param validatorUnits validation units
      */
     public validate(
-        ...validatorUnits: Array<ValidationUnit<Infer<InputType>>>
-    ): Schema<Name, InputType, OutputType> {
+        ...validatorUnits: Array<ValidationUnit<Infer<Input>>>
+    ): Schema<Name, Input, Output> {
         const cloned = this.clone()
         cloned.validationPipes.push(...validatorUnits)
         return cloned
@@ -320,8 +315,8 @@ export class Schema<
      * @param target unknown parse target
      * @returns validated - transformed target
      */
-    public parse(target: unknown): Infer<OutputType> {
-        const validated: Infer<InputType> = this.performValidate(target)
+    public parse(target: unknown): Infer<Output> {
+        const validated: Infer<Input> = this.performValidate(target)
         return this.processTransformation(validated)
     }
 
@@ -333,15 +328,15 @@ export class Schema<
      */
     public safeParse(
         target: unknown,
-        defaultValue: Infer<InputType>
+        defaultValue: Infer<Input>
     ):
         | {
               success: true
-              value: Infer<OutputType>
+              value: Infer<Output>
           }
         | {
               success: false
-              value: Infer<OutputType>
+              value: Infer<Output>
               error: string
               cause: Array<MetalCause>
           } {
@@ -357,15 +352,15 @@ export class Schema<
             if (e instanceof MetalError)
                 return {
                     success: false,
-                    value: defaultValue as Infer<OutputType>,
+                    value: defaultValue as Infer<Output>,
                     error: e.message,
                     cause: e.cause,
                 }
 
             return {
                 success: false,
-                value: defaultValue as Infer<OutputType>,
-                error: `Metal unknown error occurred.\n${JSON.stringify(e)}`,
+                value: defaultValue as Infer<Output>,
+                error: `Metal unknown error occurred.\n${prettyPrint(e)}`,
                 cause: [
                     {
                         message: "unknown error occurred",
@@ -380,7 +375,7 @@ export class Schema<
     /**
      * @description narrowing type guard
      */
-    public is(input: unknown): input is Infer<InputType> {
+    public is(input: unknown): input is Infer<Input> {
         try {
             this.parse(input)
             return true
@@ -392,7 +387,7 @@ export class Schema<
     /**
      * @description assert type guard
      */
-    public assert(input: unknown): asserts input is Infer<InputType> {
+    public assert(input: unknown): asserts input is Infer<Input> {
         if (this.is(input)) return
 
         this.$errorStack.push({
@@ -409,7 +404,7 @@ export class Schema<
     /**
      * @description set default value
      */
-    private default(defaultValue: Infer<InputType>) {
+    public default(defaultValue: Infer<Input>) {
         this.defaultValue = defaultValue
         return this
     }
