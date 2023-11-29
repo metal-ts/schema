@@ -1,4 +1,5 @@
 import type { TOTAL_TYPE_UNIT_NAMES } from "../interface/type"
+import { prettyPrint } from "../utils"
 import type { SchemaErrorStack } from "./schema.error.stack"
 
 interface BaseCause {
@@ -77,7 +78,7 @@ export class MetalError extends Error {
 
     private formatCause(cause: BaseCause | CustomCause): string {
         return Object.entries(cause)
-            .map(([key, value]) => `► ${key}: ${JSON.stringify(value)}`)
+            .map(([key, value]) => `► ${key}: ${prettyPrint(value)}`)
             .join("\n")
     }
 
@@ -96,7 +97,7 @@ export class MetalError extends Error {
         givenValue: unknown,
         additionalMessage?: string
     ): string {
-        return `Expected type ${type}, but received ${typeof givenValue} - ${JSON.stringify(
+        return `Expected type ${type}, but received ${typeof givenValue} - ${prettyPrint(
             givenValue
         )}${additionalMessage ? `\n${additionalMessage}` : ""}`
     }
