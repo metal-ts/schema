@@ -1,0 +1,98 @@
+import { describe, expect, it } from "vitest"
+import { t } from "../index"
+import { label } from "./utils/test.label"
+
+describe(label.unit("MetalType - ArraySchema"), () => {
+    it(label.case("should parse array of number -> strict"), () => {
+        const arraySchema = t.array(t.number())
+        const parsed = arraySchema.parse([1, 2, 3])
+        expect(parsed).toEqual([1, 2, 3])
+    })
+
+    it(label.case("should parse array of object -> strict"), () => {
+        const arraySchema = t.array(
+            t
+                .object({
+                    hello: t.string(),
+                    world: t.number(),
+                })
+                .filter()
+        )
+        const parsed = arraySchema.parse([
+            { hello: "hello", world: 1 },
+            { hello: "world", world: 2, thisShouldBeThrown: true },
+        ])
+        expect(parsed).toEqual([
+            { hello: "hello", world: 1 },
+            { hello: "world", world: 2 },
+        ])
+    })
+
+    it(label.case("should parse array of array -> strict"), () => {
+        const arraySchema = t.array(t.array(t.number()))
+        const parsed = arraySchema.parse([
+            [1, 2, 3],
+            [4, 5, 6],
+        ])
+        expect(parsed).toEqual([
+            [1, 2, 3],
+            [4, 5, 6],
+        ])
+    })
+
+    it(label.case("should parse array of tuple -> strict"), () => {
+        const arraySchema = t.array(
+            t.tuple([t.string(), t.number(), t.boolean()])
+        )
+        const parsed = arraySchema.parse([
+            ["hello", 1, true],
+            ["world", 2, false],
+        ])
+        expect(parsed).toEqual([
+            ["hello", 1, true],
+            ["world", 2, false],
+        ])
+    })
+
+    it(label.case("should parse array of literal -> strict"), () => {
+        const arraySchema = t.array(t.literal("hello"))
+        const parsed = arraySchema.parse(["hello", "hello", "hello"])
+        expect(parsed).toEqual(["hello", "hello", "hello"])
+    })
+
+    it(label.case("should parse array of unknown -> strict"), () => {
+        const arraySchema = t.array(t.unknown())
+        const parsed = arraySchema.parse(["hello", 1, true])
+        expect(parsed).toEqual(["hello", 1, true])
+    })
+
+    it(label.case("should parse array of any -> strict"), () => {
+        const arraySchema = t.array(t.any())
+        const parsed = arraySchema.parse(["hello", 1, true])
+        expect(parsed).toEqual(["hello", 1, true])
+    })
+
+    it(label.case("should parse array of array of array -> strict"), () => {
+        const arraySchema = t.array(t.array(t.array(t.number())))
+        const parsed = arraySchema.parse([
+            [
+                [1, 2, 3],
+                [4, 5, 6],
+            ],
+            [
+                [7, 8, 9],
+                [10, 11, 12],
+            ],
+        ])
+        expect(parsed).toEqual([
+            [
+                [1, 2, 3],
+                [4, 5, 6],
+            ],
+            [
+                [7, 8, 9],
+                [10, 11, 12],
+            ],
+        ])
+    })
+})
