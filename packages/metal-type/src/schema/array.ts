@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
-import type { WITH_NAME_NOTATION } from "../interface/type"
-import { Infer } from "../metal-type"
+import type { Infer, WITH_NAME_NOTATION } from "../interface"
 import { prettyPrint } from "../utils"
 import {
     Schema,
@@ -15,7 +14,7 @@ export class ArraySchema<
         Input extends SchemaShape,
         Output = Input,
     >
-    extends Schema<Name, Input, Output>
+    extends Schema<Name, Input[], Output[]>
     implements TypescriptFeatures
 {
     public constructor(
@@ -67,11 +66,11 @@ export class ArraySchema<
         this.arraySchema = arraySchema
     }
 
-    public override parse(target: unknown): Infer<Output> {
+    public override parse(target: unknown): Infer<Output>[] {
         if (this.internalValidator(target, this.$errorStack)) {
             return (target as unknown[]).map(
                 (e) => this.arraySchema.parse(e) as Infer<Output>
-            ) as Infer<Output>
+            ) as Infer<Output>[]
         }
 
         throw new MetalError({
