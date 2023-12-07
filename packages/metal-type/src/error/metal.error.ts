@@ -50,13 +50,18 @@ export class MetalError extends Error {
         Error.captureStackTrace(this, startStack ?? MetalError)
     }
 
-    public override readonly name: string
-
     private errorTitle: string
+
+    /**
+     * @description Get the schema error message
+     */
     public override get message(): string {
         return this.specification
     }
 
+    /**
+     * @description Expected type of the value
+     */
     public readonly expectedType: TOTAL_TYPE_UNIT_NAMES
 
     private static addMessagePrefix = (code: string): string => {
@@ -67,6 +72,9 @@ export class MetalError extends Error {
     }
 
     private _cause: Array<CustomCause | BaseCause> = []
+    /**
+     * @description Get the cause of the error
+     */
     public override get cause(): Array<CustomCause | BaseCause> {
         return this._cause
     }
