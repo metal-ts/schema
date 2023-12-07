@@ -211,7 +211,8 @@ const _null = createPrimitives<"NULL", null, null>("NULL", (target, e) => {
     return isNull
 })
 
-const any = createPrimitives<"ANY", unknown, unknown>("ANY", () => true)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const any = createPrimitives<"ANY", any, any>("ANY", () => true)
 
 const unknown = createPrimitives<"UNKNOWN", unknown, unknown>(
     "UNKNOWN",
