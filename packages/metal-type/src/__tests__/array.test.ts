@@ -95,4 +95,49 @@ describe(label.unit("MetalType - ArraySchema"), () => {
             ],
         ])
     })
+
+    it(
+        label.case("should parse array of array of complex object -> strict"),
+        () => {
+            const complexArraySchema = t.array(
+                t.array(
+                    t.union(
+                        t
+                            .object({
+                                hello: t.string(),
+                                world: t.number(),
+                            })
+                            .filter(),
+                        t.literal("hello"),
+                        t.union(t.number(), t.object({ hello: t.string() }))
+                    )
+                )
+            )
+
+            const parsed = complexArraySchema.parse([
+                [
+                    { hello: "hello", world: 1 },
+                    { hello: "world", world: 2, thisShouldBeThrown: true },
+                ],
+                ["hello", "hello", "hello"],
+                [1, 2, 3],
+            ])
+            expect(parsed).toEqual([
+                [
+                    { hello: "hello", world: 1 },
+                    { hello: "world", world: 2 },
+                ],
+                ["hello", "hello", "hello"],
+                [1, 2, 3],
+            ])
+
+            const numberParsed = complexArraySchema.parse([[1, 2, 3]])
+            expect(numberParsed).toEqual([[1, 2, 3]])
+
+            const literalParsed = complexArraySchema.parse([
+                ["hello", "hello", "hello"],
+            ])
+            expect(literalParsed).toEqual([["hello", "hello", "hello"]])
+        }
+    )
 })
