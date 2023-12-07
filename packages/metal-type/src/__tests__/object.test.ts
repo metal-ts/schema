@@ -167,7 +167,7 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     })
 
     it(label.case("should parse object -> extra key is allowed"), () => {
-        const StrictSchema = t
+        const LooseSchema = t
             .object({
                 maxNumber: t.number(),
                 string: t.string(),
@@ -194,7 +194,7 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
             fang: "foo", // will be included
         }
 
-        const validated = StrictSchema.parse(validateData)
+        const validated = LooseSchema.parse(validateData)
         expect(validated).toStrictEqual({
             maxNumber: Number.MAX_VALUE,
             string: "string",
