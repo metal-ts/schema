@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type MetalCause, MetalError } from "../error"
 import { SchemaErrorStack } from "../error/schema.error.stack"
-import type { Infer } from "../interface/infer"
-import type { TOTAL_TYPE_UNIT_NAMES } from "../interface/type"
+import type { Infer, TOTAL_TYPE_UNIT_NAMES } from "../interface"
 import { prettyPrint } from "../utils"
 
 export type ValidationUnit<ValidationTarget> = (
@@ -93,17 +92,31 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
         this.$errorStack = new SchemaErrorStack()
     }
 
+    /**
+     * @description Schema type name
+     */
     public get name(): Name {
         return this._name
     }
+    /**
+     * @description Schema label
+     */
     public get label(): string {
         return this._label ?? this._name
     }
+    /**
+     * @description Schema type name in lowercase
+     */
     public get type(): Lowercase<Name> {
         return this._name.toLowerCase() as Lowercase<Name>
     }
+    /**
+     * @description Schema default value
+     */
     public defaultValue?: Infer<Input> | null = null
+
     protected $errorStack: SchemaErrorStack
+
     /**
      * @description Inject external error manager
      * @example
@@ -236,7 +249,8 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     }
 
     /**
-     * @param transformer transformation function
+     * @description Add transformer
+     * @param transformer transformer function
      */
     public transform<NewOutput>(
         transformer: Transformer<Output, NewOutput>
@@ -285,7 +299,7 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     }
 
     /**
-     * @description clone schema
+     * @description Clone schema
      */
     public clone(): Schema<Name, Input, Output> {
         this.$errorStack.reset()
@@ -299,7 +313,7 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     }
 
     /**
-     * @description add validation unit
+     * @description Add validation unit
      * @param validatorUnits validation units
      */
     public validate(
@@ -373,7 +387,7 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     }
 
     /**
-     * @description narrowing type guard
+     * @description Narrowing type guard
      */
     public is(input: unknown): input is Infer<Input> {
         try {
@@ -385,7 +399,7 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     }
 
     /**
-     * @description assert type guard
+     * @description Assert type guard
      */
     public assert(input: unknown): asserts input is Infer<Input> {
         if (this.is(input)) return
@@ -402,7 +416,7 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     }
 
     /**
-     * @description set default value
+     * @description Set default value
      */
     public default(defaultValue: Infer<Input>) {
         this.defaultValue = defaultValue
@@ -410,7 +424,7 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     }
 
     /**
-     * @description schema detail information for debugging
+     * @description Schema detail information for debugging
      */
     public get schemaDetail(): unknown {
         return this.type

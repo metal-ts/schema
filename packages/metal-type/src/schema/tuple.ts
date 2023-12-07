@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
-import { WITH_NAME_NOTATION } from "../interface/type"
-import { Infer } from "../metal-type"
+import type { Infer, WITH_NAME_NOTATION } from "../interface"
 import { prettyPrint } from "../utils"
 import {
     Schema,
@@ -84,6 +83,9 @@ export class TupleSchema<
         this._tupleShape = _tupleShape
     }
 
+    /**
+     * @description Get the tuple shape
+     */
     public get tupleShape(): Input {
         return this._tupleShape.map((s) => s.clone()) as unknown as Input
     }

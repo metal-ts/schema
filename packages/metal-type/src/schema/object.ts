@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
-import type { RemoveOptionalMark, WITH_NAME_NOTATION } from "../interface/type"
-import { Infer } from "../metal-type"
+import type {
+    Infer,
+    RemoveOptionalMark,
+    WITH_NAME_NOTATION,
+} from "../interface"
 import {
     ArraySchema,
     PrimitiveSchema,
