@@ -18,7 +18,7 @@ import type { PRIMITIVES_UNIT_NAMES } from "./type"
  * }
  * ```
  */
-type Op<Record> = {
+type GetOptionalField<Record> = {
     [RecordKey in keyof Record as RecordKey extends `${infer OptionalKey}?`
         ? OptionalKey
         : never]?: RecordKey extends `${string}?` ? Record[RecordKey] : never
@@ -38,13 +38,14 @@ type Op<Record> = {
  * }
  * ```
  */
-type Re<Record> = {
+type GetRequiredField<Record> = {
     [RecordKey in keyof Record as RecordKey extends `${string}?`
         ? never
         : RecordKey]: Record[RecordKey]
 }
-type O<T> = Re<T> & Op<T>
+type GetOptionalObject<T> = GetRequiredField<T> & GetOptionalField<T>
 
+type InferArray<T> = T extends Array<infer U> ? U : never
 /**
  * @description Get type of schema
  */
@@ -57,8 +58,8 @@ export type Infer<T> = T extends Schema<infer Name, any, infer OutputType>
           ? OutputType
           : Name extends "ARRAY"
             ? OutputType extends SchemaShape
-                ? Infer<OutputType>[]
-                : OutputType
+                ? never
+                : InferArray<Infer<OutputType>>[]
             : Infer<OutputType>
     : T extends readonly [infer U, ...infer Rest]
       ? Rest extends never[]
@@ -66,7 +67,7 @@ export type Infer<T> = T extends Schema<infer Name, any, infer OutputType>
           : readonly [Infer<U>, ...Infer<Rest>]
       : T extends Record<string, any>
         ? Prettify<
-              O<{
+              GetOptionalObject<{
                   [Key in keyof T]: Infer<T[Key]>
               }>
           >
