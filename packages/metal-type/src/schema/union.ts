@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
-import type { WITH_NAME_NOTATION } from "../interface/type"
-import { Infer } from "../metal-type"
+import type { Infer, WITH_NAME_NOTATION } from "../interface"
+import { prettyPrint } from "../utils"
 import {
     Schema,
     type SchemaShape,
@@ -32,11 +32,9 @@ export class UnionSchema<
                 e.push({
                     error_type: "union_error",
                     message: MetalError.formatTypeError(
-                        this.schemaDetail,
+                        prettyPrint(this.schemaDetail),
                         target,
-                        `Union must be one of ${this._unionShape
-                            .map((schema) => schema.schemaDetail)
-                            .join(", ")}`
+                        `Union must be one of ${prettyPrint(this.schemaDetail)}`
                     ),
                 })
             }
@@ -65,10 +63,13 @@ export class UnionSchema<
         })
     }
 
-    public override get schemaDetail(): string {
-        return this._unionShape.map((schema) => schema.schemaDetail).join(" | ")
+    public override get schemaDetail(): unknown[] {
+        return this._unionShape.map((schema) => schema.schemaDetail)
     }
 
+    /**
+     * @description Get the union shape
+     */
     public get unionShape(): Input {
         return this._unionShape.map((schema) =>
             schema.clone()
