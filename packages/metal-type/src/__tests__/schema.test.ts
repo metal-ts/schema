@@ -61,6 +61,13 @@ const toCamelCase = transformer((target: string) => {
     return camelCased as `${string}@${string}.${string}`
 })
 
+const toEmailInfo = transformer((target: `${string}@${string}.${string}`) => {
+    return {
+        email: target,
+        length: target.length,
+    }
+})
+
 const Email = new Schema<"EMAIL", string, `${string}@${string}.${string}`>(
     "EMAIL",
     isEmail
@@ -116,11 +123,20 @@ describe(label.unit("MetalType - Schema base"), () => {
         }
     })
 
-    it(label.case("should transform value correctly -> strict"), () => {
+    it(label.case("should transform value softly -> strict"), () => {
         const camelCasedEmail = Email.transform(toCamelCase).parse(
             "alpha_beta@email.com"
         )
         expect(camelCasedEmail).toEqual("alphaBeta@email.com")
+    })
+
+    it(label.case("should transform value hardly -> strict"), () => {
+        const WithEmailInfo = Email.transform(toEmailInfo)
+        const emailInfo = WithEmailInfo.parse("alpha_beta@email.com")
+        expect(emailInfo).toEqual({
+            email: "alpha_beta@email.com",
+            length: "alpha_beta@email.com".length,
+        })
     })
 
     it(label.case("should transformHard schema correctly -> strict"), () => {
