@@ -56,7 +56,7 @@ export class ObjectSchema<
         ) => {
             const targetKeys = Object.keys(target)
             const extraKeys = targetKeys.filter(
-                (key) => !this.schemaKeys.includes(key)
+                (key) => !this.schemaKeysSet.has(key)
             )
             if (extraKeys.length > 0) {
                 e.push({
@@ -125,9 +125,8 @@ export class ObjectSchema<
             // check schema by object parse mode
             if (this.isStrictMode)
                 return extraKeyValidator(target, e) && objectChecker(target, e)
-            else {
-                return objectChecker(target, e)
-            }
+
+            return objectChecker(target, e)
         }
 
         super(name, objectValidator)
@@ -136,6 +135,7 @@ export class ObjectSchema<
             this.removeOptionalAtShape(shape)
         ) as Input
         this.schemaKeys = Object.keys(this._shape)
+        this.schemaKeysSet = new Set(this.schemaKeys)
     }
 
     private isStrictMode: boolean = false
@@ -212,6 +212,14 @@ export class ObjectSchema<
         return super.parse(filterExtraKeys) as Infer<Output>
     }
 
+    public override clone(): ObjectSchema<Name, Input, Output> {
+        return new ObjectSchema<Name, Input, Output>(
+            this.name,
+            this._shape,
+            this.internalValidator
+        )
+    }
+
     private removeOptionalAtShape = (
         shape: Record<string, SchemaShape>
     ): Record<string, SchemaShape> => {
@@ -270,6 +278,7 @@ export class ObjectSchema<
     }
     private readonly _shape: Input
     private readonly schemaKeys: string[]
+    private readonly schemaKeysSet: Set<string>
     public override get schemaDetail(): Record<string, any> {
         return Object.entries(this._shape).reduce<Record<string, any>>(
             (newSchema, [key, value]) => {
