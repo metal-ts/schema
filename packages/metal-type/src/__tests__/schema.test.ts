@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { MetalError } from "../error"
 import { t } from "../index"
-import {
-    Schema,
-    type ValidationUnit,
-    transformer,
-    validator,
-} from "../schema/schema"
+import { Schema, transformer, validator } from "../schema"
 import { label } from "./utils/test.label"
 
 const isEmail = validator((target, error) => {
@@ -14,6 +9,7 @@ const isEmail = validator((target, error) => {
         error.push({
             error_type: "email_type_error",
             message: "Email should be string",
+            value: target,
         })
         return false
     }
@@ -29,9 +25,8 @@ const isEmail = validator((target, error) => {
     return isValidEmail
 })
 
-const max =
-    (maxNum: number): ValidationUnit<string> =>
-    (target, error) => {
+const max = (maxNum: number) =>
+    validator((target: string, error) => {
         if (target.length > maxNum) {
             error.push({
                 error_type: "max_length_error",
@@ -40,10 +35,9 @@ const max =
             return false
         }
         return true
-    }
-const min =
-    (minNum: number): ValidationUnit<string> =>
-    (target, error) => {
+    })
+const min = (minNum: number) =>
+    validator((target: string, error) => {
         if (target.length < minNum) {
             error.push({
                 error_type: "min_length_error",
@@ -52,7 +46,7 @@ const min =
             return false
         }
         return true
-    }
+    })
 
 const toCamelCase = transformer((target: string) => {
     const camelCased = target.replace(/([-_][a-z])/gi, ($1) =>
@@ -61,12 +55,10 @@ const toCamelCase = transformer((target: string) => {
     return camelCased as `${string}@${string}.${string}`
 })
 
-const toEmailInfo = transformer((target: `${string}@${string}.${string}`) => {
-    return {
-        email: target,
-        length: target.length,
-    }
-})
+const toEmailInfo = transformer((target: `${string}@${string}.${string}`) => ({
+    email: target,
+    length: target.length,
+}))
 
 const Email = new Schema<"EMAIL", string, `${string}@${string}.${string}`>(
     "EMAIL",
