@@ -87,7 +87,7 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
         private readonly _name: Name,
         protected readonly internalValidator: ValidationUnit<unknown>,
         private readonly _label?: string,
-        protected transformer?: Transformer<Input, Output>
+        protected readonly transformer?: Transformer<Input, Output>
     ) {
         this.$errorStack = new SchemaErrorStack()
     }
