@@ -86,7 +86,7 @@ export class MetalError extends Error {
 
     private formatCause(cause: BaseCause | CustomCause): string {
         return Object.entries(cause)
-            .map(([key, value]) => `► ${key}: ${prettyPrint(value)}`)
+            .map(([key, value]) => `${key}: ${prettyPrint(value)}`)
             .join("\n")
     }
 
