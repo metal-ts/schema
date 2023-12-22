@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import { t } from ".."
 import { label } from "./utils/test.label"
 
-const isEmail: t.ValidationUnit<string> = (target, error) => {
+const isEmail = t.validator((target: string, error) => {
     //email regex
     const emailRegex = /\S+@\S+\.\S+/
     const isValidEmail = emailRegex.test(target)
@@ -13,11 +13,10 @@ const isEmail: t.ValidationUnit<string> = (target, error) => {
         })
     }
     return isValidEmail
-}
+})
 
-const min =
-    (minN: number): t.ValidationUnit<string> =>
-    (target, error) => {
+const min = (minN: number) =>
+    t.validator((target: string, error) => {
         const isMin = target.length >= minN
         if (!isMin) {
             error.push({
@@ -26,11 +25,10 @@ const min =
             })
         }
         return isMin
-    }
+    })
 
-const max =
-    (maxN: number): t.ValidationUnit<string> =>
-    (target, error) => {
+const max = (maxN: number) =>
+    t.validator((target: string, error) => {
         const isMax = target.length <= maxN
         if (!isMax) {
             error.push({
@@ -39,7 +37,7 @@ const max =
             })
         }
         return isMax
-    }
+    })
 
 describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should parse object -> strict"), () => {
