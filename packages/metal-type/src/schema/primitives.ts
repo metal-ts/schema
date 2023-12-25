@@ -1,6 +1,6 @@
 import { MetalError } from "../error"
 import type { PRIMITIVES_UNIT_NAMES } from "../interface/type"
-import { Schema, type TypescriptFeatures, type ValidationUnit } from "./schema"
+import { type AbstractSchema, Schema, type ValidationUnit } from "./schema"
 
 export class PrimitiveSchema<
         Name extends PRIMITIVES_UNIT_NAMES,
@@ -8,7 +8,7 @@ export class PrimitiveSchema<
         Output = Input,
     >
     extends Schema<Name, Input, Output>
-    implements TypescriptFeatures
+    implements AbstractSchema
 {
     constructor(name: Name, internalValidator: ValidationUnit<unknown>) {
         super(name, internalValidator)
@@ -75,6 +75,10 @@ export class PrimitiveSchema<
             `${this.name} | NULL | UNDEFINED` as Name,
             nullishSchemaValidator
         )
+    }
+
+    public get shape(): string {
+        return this.type
     }
 }
 
