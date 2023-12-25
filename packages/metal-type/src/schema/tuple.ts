@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
+import { SchemaErrorStack } from "../error/schema.error.stack"
 import type { Infer, WITH_NAME_NOTATION } from "../interface"
-import { prettyPrint } from "../utils"
+import { logSchema } from "../utils"
 import {
+    type AbstractSchema,
     Schema,
+    SchemaInformation,
     type SchemaShape,
-    type TypescriptFeatures,
     ValidationUnit,
 } from "./schema"
 
@@ -15,7 +17,7 @@ export class TupleSchema<
         const Output = Input,
     >
     extends Schema<Name, Input, Output>
-    implements TypescriptFeatures
+    implements AbstractSchema
 {
     constructor(
         name: Name,
@@ -58,11 +60,9 @@ export class TupleSchema<
                     e.push({
                         error_type: "tuple_error",
                         message: MetalError.formatTypeError(
-                            this.type,
+                            logSchema(schema!.schemaDetail),
                             target,
-                            `Tuple item at index ${i} must be ${prettyPrint(
-                                schema?.schemaDetail
-                            )}`
+                            `Check tuple index ${i}`
                         ),
                         tuple_index: i,
                         tuple_value: item,
@@ -78,47 +78,46 @@ export class TupleSchema<
         }
 
         super(name, tupleValidator)
-
-        this.injectErrorStackToTupleSchema(_tupleShape)
-        this._tupleShape = _tupleShape
+        this.injectErrorStack(this.$errorStack)
     }
 
     /**
      * @description Get the tuple shape
      */
-    public get tupleShape(): Input {
+    public get shape(): Input {
         return this._tupleShape.map((s) => s.clone()) as unknown as Input
     }
 
-    public override get schemaDetail(): Array<unknown> {
-        return this._tupleShape.map((schema) => schema.schemaDetail)
+    public override injectErrorStack(errorStack: SchemaErrorStack): void {
+        this._tupleShape.forEach((schema) => {
+            schema.injectErrorStack(errorStack)
+            super.injectErrorStack(errorStack)
+        })
     }
-    public override parse(target: unknown): Infer<Output> {
+
+    public override get schemaDetail(): SchemaInformation<
+        Name,
+        Array<SchemaInformation<string, unknown>>
+    > {
+        return {
+            type: this.name,
+            shape: this._tupleShape.map((schema) => schema.schemaDetail),
+        }
+    }
+    public override parse(target: unknown): Infer<Schema<Name, Input, Output>> {
         if (this.internalValidator(target, this.$errorStack)) {
             const parsed: unknown[] = []
             for (let i = 0; i < this._tupleShape.length; i++) {
                 const schema = this._tupleShape[i]
-                parsed.push(schema!.parse((target as unknown[])[i]))
+                parsed.push(schema?.parse((target as unknown[])[i]))
             }
-            return parsed as Infer<Output>
+            return parsed as Infer<Schema<Name, Input, Output>>
         }
 
         throw new MetalError({
             code: "VALIDATION",
             expectedType: this.name,
             manager: this.$errorStack,
-        })
-    }
-
-    private injectErrorStackToTupleSchema = (
-        tupleSchema: readonly SchemaShape[]
-    ): void => {
-        tupleSchema.forEach((schema) => {
-            if (schema instanceof Schema) {
-                schema.injectErrorStack(this.$errorStack)
-                return schema
-            }
-            return schema
         })
     }
 
@@ -168,8 +167,3 @@ export class TupleSchema<
                 )
         )
 }
-
-export const tuple = <const InputType extends readonly SchemaShape[]>(
-    tuple: InputType
-): TupleSchema<"TUPLE", InputType, InputType> =>
-    new TupleSchema<"TUPLE", InputType, InputType>("TUPLE", tuple)
