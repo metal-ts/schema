@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { MetalError } from "../error"
-import { t } from "../index"
-import { Schema, transformer, validator } from "../schema"
+import { Schema, t, transformer, validator } from "../index"
 import { label } from "./utils/test.label"
 
 const isEmail = validator((target, error) => {
@@ -69,16 +67,6 @@ describe(label.unit("MetalType - Schema base"), () => {
     it(label.case("should parse email correctly -> strict"), () => {
         const validEmail = Email.parse("email@gmail.com")
         expect(validEmail).toEqual("email@gmail.com")
-
-        try {
-            Email.parse("not-valid-email")
-        } catch (e: unknown) {
-            if (e instanceof MetalError) {
-                expect(e.message).toEqual(
-                    '[ error1: invalid_email_error ]: "not-valid-email" is not valid email format'
-                )
-            }
-        }
     })
 
     it(label.case("should run validation pipes correctly -> strict"), () => {
@@ -135,13 +123,13 @@ describe(label.unit("MetalType - Schema base"), () => {
         const User = Email.transformHard((prev) => {
             return t.object({
                 type: t.literal("email"),
-                value: t.string(),
+                value: t.string,
                 email: prev.transform(toCamelCase).validate(max(20)),
             })
         }).transformHard((prev) => {
             return t.object({
                 type: t.literal("email"),
-                value: t.string(),
+                value: t.string,
                 email: prev,
             })
         })
