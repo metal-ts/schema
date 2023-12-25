@@ -1,1 +1,2 @@
-export * as t from "./metal-type"
+export * from "./schema"
+export type { Infer } from "./interface"
