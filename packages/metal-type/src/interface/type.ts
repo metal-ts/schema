@@ -27,7 +27,7 @@ type WITH_MARK<T extends string> =
     | WITH_OPTIONAL_MARK<T>
     | WITH_NULL_MARK<T>
 
-type WITH_TRANSFORM_MARK<T extends string> = `${T} - TRANSFORMED`
+export type WITH_TRANSFORM_MARK<T extends string> = `${T}_TRANSFORMED`
 
 /**
  * @description Get type name of schema
