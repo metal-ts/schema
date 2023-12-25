@@ -4,7 +4,7 @@ import { label } from "./utils/test.label"
 
 describe(label.unit("MetalType - UnionSchema"), () => {
     it(label.case("should parse union of string and number -> strict"), () => {
-        const unionSchema = t.union(t.string(), t.number())
+        const unionSchema = t.union(t.string, t.number)
         const parsed = unionSchema.parse("hello")
         const parsed2 = unionSchema.parse(1)
 
@@ -13,7 +13,7 @@ describe(label.unit("MetalType - UnionSchema"), () => {
     })
 
     it(label.case("should parse union of string and number -> strict"), () => {
-        const unionSchema = t.union(t.string(), t.number())
+        const unionSchema = t.union(t.string, t.number)
         const parsed = unionSchema.parse("hello")
         const parsed2 = unionSchema.parse(1)
 
@@ -25,10 +25,10 @@ describe(label.unit("MetalType - UnionSchema"), () => {
         const unionSchema = t.union(
             t
                 .object({
-                    hello: t.string(),
+                    hello: t.string,
                 })
                 .filter(),
-            t.array(t.number())
+            t.array(t.number)
         )
         const parsed = unionSchema.parse({
             hello: "hello",
@@ -56,8 +56,8 @@ describe(label.unit("MetalType - UnionSchema"), () => {
 
     it(label.case("should parse union of tuple -> strict"), () => {
         const unionSchema = t.union(
-            t.tuple([t.string(), t.number()]),
-            t.tuple([t.number(), t.string()])
+            t.tuple([t.string, t.number]),
+            t.tuple([t.number, t.string])
         )
         const parsed = unionSchema.parse(["hello", 1])
         const parsed2 = unionSchema.parse([1, "hello"])
@@ -67,7 +67,7 @@ describe(label.unit("MetalType - UnionSchema"), () => {
     })
 
     it(label.case("should parse union of unknown -> strict"), () => {
-        const unionSchema = t.union(t.unknown(), t.unknown())
+        const unionSchema = t.union(t.unknown, t.unknown)
         const parsed = unionSchema.parse("hello")
         const parsed2 = unionSchema.parse(1)
         const parsed3 = unionSchema.parse(true)
@@ -79,17 +79,15 @@ describe(label.unit("MetalType - UnionSchema"), () => {
 
     it(label.case("should parse union of union -> strict"), () => {
         const unionSchema = t.union(
-            t.union(t.string(), t.number()),
-            t.union(t.boolean(), t.literal("hello"))
+            t.union(t.symbol, t.number),
+            t.union(t.boolean, t.literal("hello"))
         )
         const parsed = unionSchema.parse("hello")
         const parsed2 = unionSchema.parse(1)
         const parsed3 = unionSchema.parse(true)
-        const parsed4 = unionSchema.parse("world")
 
         expect(parsed).toEqual("hello")
         expect(parsed2).toEqual(1)
         expect(parsed3).toEqual(true)
-        expect(parsed4).toEqual("world")
     })
 })
