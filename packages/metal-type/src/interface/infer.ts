@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Schema, SchemaShape } from "../schema"
-import type { PRIMITIVES_UNIT_NAMES } from "./type"
+import type { PRIMITIVES_UNIT_NAMES, WITH_TRANSFORM_MARK } from "./type"
 
 /**
  * @description get optional field from record
@@ -45,7 +45,7 @@ type GetRequiredField<Record> = {
 }
 type GetOptionalObject<T> = GetRequiredField<T> & GetOptionalField<T>
 
-type InferArray<T> = T extends Array<infer U> ? U : never
+type InferArray<T> = T extends Array<infer U> ? Array<U> : never
 /**
  * @description Get type of schema
  */
@@ -59,8 +59,10 @@ export type Infer<T> = T extends Schema<infer Name, any, infer OutputType>
           : Name extends "ARRAY"
             ? OutputType extends SchemaShape
                 ? never
-                : InferArray<Infer<OutputType>>[]
-            : Infer<OutputType>
+                : InferArray<Infer<OutputType>>
+            : Name extends WITH_TRANSFORM_MARK<string>
+              ? OutputType
+              : Infer<OutputType>
     : T extends readonly [infer U, ...infer Rest]
       ? Rest extends never[]
           ? readonly [Infer<U>]
