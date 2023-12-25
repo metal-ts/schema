@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
+import type { SchemaErrorStack } from "../error/schema.error.stack"
 import type { Infer, WITH_NAME_NOTATION } from "../interface"
-import { prettyPrint } from "../utils"
+import { logSchema } from "../utils"
 import {
+    type AbstractSchema,
     Schema,
+    type SchemaInformation,
     type SchemaShape,
-    type TypescriptFeatures,
     type ValidationUnit,
 } from "./schema"
 
@@ -15,11 +17,11 @@ export class ArraySchema<
         Output = Input,
     >
     extends Schema<Name, Input[], Output[]>
-    implements TypescriptFeatures
+    implements AbstractSchema
 {
     public constructor(
         name: Name,
-        public readonly arraySchema: Input,
+        private readonly _arrayShape: Input,
         extraValidator?: ValidationUnit<unknown>
     ) {
         const arrValidator: ValidationUnit<unknown> = (target, e) => {
@@ -38,21 +40,21 @@ export class ArraySchema<
             const isValidArrayElement =
                 target
                     .map((item, currentIndex) => {
-                        const isValidType = this.arraySchema.is(item)
+                        const isValidType = this._arrayShape.is(item)
                         if (!isValidType) {
                             e.push({
                                 error_type: "array_error",
                                 message: MetalError.formatTypeError(
                                     this.type,
                                     target,
-                                    `Array item at index ${currentIndex} must be ${prettyPrint(
-                                        this.arraySchema.schemaDetail
+                                    `Array item at index ${currentIndex} must be ${logSchema(
+                                        this._arrayShape.schemaDetail
                                     )}`
                                 ),
                                 array_index: currentIndex,
                                 array_item: item,
                                 array_expected_type:
-                                    this.arraySchema.schemaDetail,
+                                    this._arrayShape.schemaDetail,
                             })
                         }
                         return isValidType
@@ -63,14 +65,21 @@ export class ArraySchema<
         }
 
         super(name, arrValidator)
-        this.arraySchema = arraySchema
+        this.injectErrorStack(this.$errorStack)
     }
 
-    public override parse(target: unknown): Infer<Output>[] {
+    public override injectErrorStack(errorStack: SchemaErrorStack): void {
+        this._arrayShape.injectErrorStack(errorStack)
+        super.injectErrorStack(errorStack)
+    }
+
+    public override parse(
+        target: unknown
+    ): Infer<Schema<Name, Input[], Output[]>> {
         if (this.internalValidator(target, this.$errorStack)) {
-            return (target as unknown[]).map(
-                (e) => this.arraySchema.parse(e) as Infer<Output>
-            ) as Infer<Output>[]
+            return (target as unknown[]).map((e) =>
+                this._arrayShape.parse(e)
+            ) as Infer<Schema<Name, Input[], Output[]>>
         }
 
         throw new MetalError({
@@ -80,8 +89,15 @@ export class ArraySchema<
         })
     }
 
-    public override get schemaDetail(): Array<unknown> {
-        return [this.arraySchema.schemaDetail]
+    public get shape(): Input {
+        return this._arrayShape.clone() as Input
+    }
+
+    public override get schemaDetail(): SchemaInformation<Name, unknown> {
+        return {
+            type: this.name,
+            shape: this._arrayShape.schemaDetail,
+        }
     }
 
     public nullish = (): ArraySchema<
@@ -93,7 +109,7 @@ export class ArraySchema<
             (validator) =>
                 new ArraySchema<"ARRAY | UNDEFINED", Input, Input | null>(
                     "ARRAY | UNDEFINED",
-                    this.arraySchema,
+                    this._arrayShape,
                     validator
                 )
         )
@@ -107,7 +123,7 @@ export class ArraySchema<
             (validator) =>
                 new ArraySchema<"ARRAY | NULL", Input, Input | undefined>(
                     "ARRAY | NULL",
-                    this.arraySchema,
+                    this._arrayShape,
                     validator
                 )
         )
@@ -123,11 +139,6 @@ export class ArraySchema<
                     "ARRAY | NULL | UNDEFINED",
                     Input,
                     Input | null | undefined
-                >("ARRAY | NULL | UNDEFINED", this.arraySchema, validator)
+                >("ARRAY | NULL | UNDEFINED", this._arrayShape, validator)
         )
 }
-
-export const array = <Input extends SchemaShape>(
-    arraySchema: Input
-): ArraySchema<"ARRAY", Input, Input> =>
-    new ArraySchema<"ARRAY", Input, Input>("ARRAY", arraySchema)
