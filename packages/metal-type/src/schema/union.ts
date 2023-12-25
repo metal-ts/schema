@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
+import { SchemaErrorStack } from "../error/schema.error.stack"
 import type { Infer, WITH_NAME_NOTATION } from "../interface"
-import { prettyPrint } from "../utils"
+import { logSchema } from "../utils"
 import {
+    type AbstractSchema,
     Schema,
+    type SchemaInformation,
     type SchemaShape,
-    type TypescriptFeatures,
     type ValidationUnit,
 } from "./schema"
 
@@ -15,7 +17,7 @@ export class UnionSchema<
         const Output = Input[number],
     >
     extends Schema<Name, Input, Output>
-    implements TypescriptFeatures
+    implements AbstractSchema
 {
     constructor(
         name: Name,
@@ -23,6 +25,7 @@ export class UnionSchema<
         extraValidator?: ValidationUnit<unknown>
     ) {
         const unionValidator: ValidationUnit<unknown> = (target, e) => {
+            // const tempShape = this.shape
             const matchedUnionLocation = this._unionShape.findIndex((schema) =>
                 schema.is(target)
             )
@@ -32,9 +35,9 @@ export class UnionSchema<
                 e.push({
                     error_type: "union_error",
                     message: MetalError.formatTypeError(
-                        prettyPrint(this.schemaDetail),
+                        logSchema(this.schemaDetail),
                         target,
-                        `Union must be one of ${prettyPrint(this.schemaDetail)}`
+                        `Union must be one of ${logSchema(this.schemaDetail)}`
                     ),
                 })
             }
@@ -43,11 +46,17 @@ export class UnionSchema<
             return extraValidator?.(target, e) ?? false
         }
         super(name, unionValidator)
-        this._unionShape = _unionShape
+        this.injectErrorStack(this.$errorStack)
+    }
+    public override injectErrorStack(errorStack: SchemaErrorStack): void {
+        this._unionShape.forEach((schema) => {
+            schema.injectErrorStack(errorStack)
+            super.injectErrorStack(errorStack)
+        })
     }
 
     private parseSelectedSchema: number = -1
-    public override parse(target: unknown): Infer<Output> {
+    public override parse(target: unknown): Infer<Schema<Name, Input, Output>> {
         if (this.internalValidator(target, this.$errorStack)) {
             const parsed =
                 this._unionShape[this.parseSelectedSchema]!.parse(target)
@@ -63,14 +72,20 @@ export class UnionSchema<
         })
     }
 
-    public override get schemaDetail(): unknown[] {
-        return this._unionShape.map((schema) => schema.schemaDetail)
+    public override get schemaDetail(): SchemaInformation<
+        Name,
+        Array<SchemaInformation<string, unknown>>
+    > {
+        return {
+            type: this.name,
+            shape: this._unionShape.map((schema) => schema.schemaDetail),
+        }
     }
 
     /**
      * @description Get the union shape
      */
-    public get unionShape(): Input {
+    public get shape(): Input {
         return this._unionShape.map((schema) =>
             schema.clone()
         ) as unknown as Input
@@ -110,8 +125,3 @@ export class UnionSchema<
                 )
         )
 }
-
-export const union = <const Input extends readonly SchemaShape[]>(
-    ...unions: Input
-): UnionSchema<"UNION", Input, Input[number]> =>
-    new UnionSchema<"UNION", Input, Input[number]>("UNION", unions)
