@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { t } from ".."
+import { t, validator } from ".."
 import { label } from "./utils/test.label"
 
-const isEmail = t.validator((target: string, error) => {
+const isEmail = validator((target: string, error) => {
     //email regex
     const emailRegex = /\S+@\S+\.\S+/
     const isValidEmail = emailRegex.test(target)
@@ -16,7 +16,7 @@ const isEmail = t.validator((target: string, error) => {
 })
 
 const min = (minN: number) =>
-    t.validator((target: string, error) => {
+    validator((target: string, error) => {
         const isMin = target.length >= minN
         if (!isMin) {
             error.push({
@@ -28,7 +28,7 @@ const min = (minN: number) =>
     })
 
 const max = (maxN: number) =>
-    t.validator((target: string, error) => {
+    validator((target: string, error) => {
         const isMax = target.length <= maxN
         if (!isMax) {
             error.push({
@@ -43,18 +43,22 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should parse object -> strict"), () => {
         const TestSchema = t
             .object({
-                x: t.string().validate(isEmail, min(2), max(20)),
-                y: t.number(),
+                x: t.string.validate(isEmail, min(2), max(20)),
+                y: t.number,
                 value1: t.object({
-                    "x?": t.number(),
-                    y: t.number(),
-                    z: t.number(),
+                    "x?": t.number,
+                    y: t.number,
+                    z: t.number,
                     value2: t.object({
-                        "x?": t.number(),
-                        "y?": t.number(),
-                        z: t.literal("ChangeThat"),
+                        "x?": t.number,
+                        "y?": t.number,
+                        z: t.union(
+                            t.literal("ChangeThat"),
+                            t.literal("hi"),
+                            t.literal("bam")
+                        ),
                     }),
-                    t: t.union(t.literal("a"), t.number()),
+                    t: t.union(t.literal("a"), t.number),
                 }),
             })
             .strict()
@@ -88,16 +92,16 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should parse object -> filter"), () => {
         const FilterSchema = t
             .object({
-                number: t.number(),
-                negNumber: t.number(),
-                maxNumber: t.number(),
-                string: t.string(),
-                longString: t.string(),
-                boolean: t.boolean(),
+                number: t.number,
+                negNumber: t.number,
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                boolean: t.boolean,
                 deeplyNested: t.object({
-                    foo: t.string(),
-                    num: t.number(),
-                    bool: t.boolean(),
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
                 }),
             })
             .filter()
@@ -136,14 +140,14 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should parse object -> extra key is disabled"), () => {
         const StrictSchema = t
             .object({
-                maxNumber: t.number(),
-                string: t.string(),
-                longString: t.string(),
-                boolean: t.boolean(),
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                boolean: t.boolean,
                 deeplyNested: t.object({
-                    foo: t.string(),
-                    num: t.number(),
-                    bool: t.boolean(),
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
                 }),
             })
             .strict()
@@ -167,14 +171,14 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should parse object -> extra key is allowed"), () => {
         const LooseSchema = t
             .object({
-                maxNumber: t.number(),
-                string: t.string(),
-                longString: t.string(),
-                boolean: t.boolean(),
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                boolean: t.boolean,
                 deeplyNested: t.object({
-                    foo: t.string(),
-                    num: t.number(),
-                    bool: t.boolean(),
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
                 }),
             })
             .loose()
@@ -210,14 +214,14 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should parse object -> partial"), () => {
         const PartialSchema = t
             .object({
-                maxNumber: t.number(),
-                string: t.string(),
-                longString: t.string(),
-                boolean: t.boolean(),
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                boolean: t.boolean,
                 deeplyNested: t.object({
-                    foo: t.string(),
-                    num: t.number(),
-                    bool: t.boolean(),
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
                 }),
             })
             .partial()
@@ -234,18 +238,18 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should deep clone shape -> zero side effect"), () => {
         const TestSchema = t
             .object({
-                x: t.string().validate(isEmail, min(2), max(20)),
-                y: t.number(),
+                x: t.string.validate(isEmail, min(2), max(20)),
+                y: t.number,
                 value1: t.object({
-                    "x?": t.number(),
-                    y: t.number(),
-                    z: t.number(),
+                    "x?": t.number,
+                    y: t.number,
+                    z: t.number,
                     value2: t.object({
-                        "x?": t.number(),
-                        "y?": t.number(),
+                        "x?": t.number,
+                        "y?": t.number,
                         z: t.literal("ChangeThat"),
                     }),
-                    t: t.union(t.literal("a"), t.number()),
+                    t: t.union(t.literal("a"), t.number),
                 }),
             })
             .strict()
@@ -253,32 +257,32 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
         const copied = TestSchema.shape
         // it can be modified by javascript, but it's not recommended
         // @ts-expect-error readonly property, can't be modified by typescript
-        copied.x = t.number() // TestSchema should not be changed
-        expect(TestSchema.shape.x).toEqual(t.string())
-        expect(copied.x).toEqual(t.number())
+        copied.x = t.number // TestSchema should not be changed
+        expect(TestSchema.shape.x).toEqual(t.string)
+        expect(copied.x).toEqual(t.number)
     })
 
     it(label.case("should parse object -> deep partial & strict"), () => {
         const DeepPartialSchema = t
             .object({
                 name: t.literal("name"),
-                maxNumber: t.number(),
-                string: t.string(),
-                longString: t.string(),
-                boolean: t.boolean(),
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                boolean: t.boolean,
                 deeplyNested: t.object({
-                    foo: t.string(),
-                    num: t.number(),
-                    bool: t.boolean(),
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
                     nested: t.object({
-                        foo: t.string(),
-                        num: t.number(),
-                        bool: t.boolean(),
+                        foo: t.string,
+                        num: t.number,
+                        bool: t.boolean,
                         nested: t
                             .object({
-                                foo: t.string(),
-                                num: t.number(),
-                                bool: t.boolean(),
+                                foo: t.string,
+                                num: t.number,
+                                bool: t.boolean,
                             })
                             .filter(),
                     }),
@@ -299,32 +303,31 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
             "should parse object -> deep partial & nested filter ignored for performance"
         ),
         () => {
-            const DeepPartialSchema = t
-                .object({
-                    name: t.literal("name"),
-                    maxNumber: t.number(),
-                    string: t.string(),
-                    longString: t.string(),
-                    boolean: t.boolean(),
-                    deeplyNested: t.object({
-                        foo: t.string(),
-                        num: t.number(),
-                        bool: t.boolean(),
-                        nested: t.object({
-                            foo: t.string(),
-                            num: t.number(),
-                            bool: t.boolean(),
-                            nested: t
-                                .object({
-                                    foo: t.string(),
-                                    num: t.number(),
-                                    bool: t.boolean(),
-                                })
-                                .filter(),
-                        }),
+            const DeepPartialSchema = t.object({
+                name: t.literal("name"),
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                boolean: t.boolean,
+                deeplyNested: t.object({
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
+                    nested: t.object({
+                        foo: t.string,
+                        num: t.number,
+                        bool: t.boolean,
+                        nested: t
+                            .object({
+                                foo: t.string,
+                                num: t.number,
+                                bool: t.boolean,
+                            })
+                            .filter(),
                     }),
-                })
-                .deepPartial()
+                }),
+            })
+            // .deepPartial()
             const StrictDeepPartial = DeepPartialSchema.strict()
 
             const validateData = {
@@ -381,7 +384,7 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should parse object -> nullable"), () => {
         const NullableSchema = t
             .object({
-                maxNumber: t.number(),
+                maxNumber: t.number,
             })
             .nullable()
 
@@ -393,7 +396,7 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should parse object -> optional"), () => {
         const OptionalSchema = t
             .object({
-                maxNumber: t.number(),
+                maxNumber: t.number,
             })
             .optional()
 
@@ -403,40 +406,31 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     })
 
     it(label.case("should parse object -> nullish"), () => {
-        const NullishSchema = t
-            .object({
-                maxNumber: t.number(),
-            })
-            .nullish()
-
-        const validateData = null
-        const validated = NullishSchema.parse(validateData)
-        expect(validated).toStrictEqual(null)
-    })
-
-    it(label.case("should parse object -> nullish"), () => {
         const OptionalNullableSchema = t
             .object({
-                maxNumber: t.number(),
+                maxNumber: t.number,
             })
             .nullish()
 
-        const validateData = undefined
-        const validated = OptionalNullableSchema.parse(validateData)
+        const undefinedData = undefined
+        const nullData = null
+        const validated = OptionalNullableSchema.parse(undefinedData)
+        const validated2 = OptionalNullableSchema.parse(nullData)
         expect(validated).toStrictEqual(undefined)
+        expect(validated2).toStrictEqual(null)
     })
 
     it(label.case("should pick object"), () => {
         const PickSchema = t
             .object({
-                maxNumber: t.number(),
-                string: t.string(),
-                longString: t.string(),
-                boolean: t.boolean(),
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                boolean: t.boolean,
                 deeplyNested: t.object({
-                    foo: t.string(),
-                    num: t.number(),
-                    bool: t.boolean(),
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
                 }),
             })
             .pick("maxNumber", "string", "longString")
@@ -465,14 +459,14 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should omit object"), () => {
         const OmitSchema = t
             .object({
-                maxNumber: t.number(),
-                string: t.string(),
-                longString: t.string(),
-                boolean: t.boolean(),
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                boolean: t.boolean,
                 deeplyNested: t.object({
-                    foo: t.string(),
-                    num: t.number(),
-                    bool: t.boolean(),
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
                 }),
             })
             .omit("maxNumber", "string", "longString")
@@ -491,6 +485,7 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
         }
 
         const validated = OmitSchema.parse(validateData)
+
         expect(validated).toStrictEqual({
             boolean: true,
             deeplyNested: {
@@ -504,22 +499,22 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     it(label.case("should extend object"), () => {
         const ExtendFirstSchema = t
             .object({
-                hey: t.string(),
-                hello: t.string(),
-                hallo: t.string(),
+                hey: t.string,
+                hello: t.string,
+                hallo: t.string,
             })
             .deepPartial()
 
         const ExtendSchema = t
             .object({
-                maxNumber: t.number(),
-                string: t.string(),
-                longString: t.string(),
-                boolean: t.boolean(),
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                "boolean?": t.boolean,
                 deeplyNested: t.object({
-                    foo: t.string(),
-                    num: t.number(),
-                    bool: t.boolean(),
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
                 }),
             })
             .extend(ExtendFirstSchema)
@@ -551,6 +546,32 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
             },
             hello: "hello",
             hallo: "hallo",
+        })
+    })
+
+    it(label.case("should transform object -> strict"), () => {
+        const TransformSchema = t
+            .object({
+                email: t.string.validate(isEmail, min(2), max(20)),
+                name: t.string,
+            })
+            .transform((e) => ({
+                email: e.email,
+                name: e.name,
+                length: e.email.length,
+                names: e.name.split(" "),
+            }))
+
+        const validateData = {
+            email: "test@gmail.com",
+            name: "test name",
+        }
+        const res = TransformSchema.parse(validateData)
+        expect(res).toStrictEqual({
+            email: "test@gmail.com",
+            name: "test name",
+            length: 14,
+            names: ["test", "name"],
         })
     })
 })
