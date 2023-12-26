@@ -61,50 +61,75 @@ const formatTypeSchema = (
 
 const TAB_NUMBER = 3 as const
 
-const formatString = (inputString: string, tab: number = TAB_NUMBER) => {
-    const TAB = " ".repeat(tab)
-    let result = ""
-    let indentLevel = 0
+const formatSchemaString = (schemaString: string, tab: number = TAB_NUMBER) => {
+    const TAB: string = " ".repeat(tab)
+    const ENTER = "\n" as const
+    const SPACE = " " as const
+    const COMMA = "," as const
 
-    for (let index = 0; index < inputString.length; index++) {
-        const char = inputString[index]
+    let indentDepth: number = 0
 
-        if (char === "{" || char === "[") {
-            result += char + "\n" + ""
-            indentLevel++
-            result += TAB.repeat(indentLevel) + " "
-        } else if (char === "}" || char === "]") {
-            result += "\n"
-            indentLevel--
-            result += TAB.repeat(indentLevel)
-            const addedChar = indentLevel === 0 ? char : ` ${char}`
-            result += addedChar
-            if (inputString[index + 1] === ",") {
-                result += ","
-                index++
-                result += "\n" + TAB.repeat(indentLevel)
+    const formattedSchema: string = schemaString
+        .split("")
+        .reduce<string>((schema, char, i) => {
+            if (char === "{" || char === "[") {
+                schema += char + ENTER
+                indentDepth++
+                schema += TAB.repeat(indentDepth) + " "
+            } else if (char === "}" || char === "]") {
+                schema += ENTER
+                indentDepth--
+                schema += TAB.repeat(indentDepth)
+
+                const addedChar = indentDepth === 0 ? char : SPACE + char
+                schema += addedChar
+
+                if (schemaString[i + 1] === COMMA) {
+                    schema += COMMA
+                    i++
+                    schema += ENTER + TAB.repeat(indentDepth)
+                }
+            } else if (char === COMMA) {
+                schema += `${COMMA}${ENTER}`
+                schema += TAB.repeat(indentDepth)
+            } else {
+                schema += char
             }
-        } else if (char === ",") {
-            result += ",\n"
-            result += TAB.repeat(indentLevel)
-        } else {
-            result += char
-        }
-    }
+            return schema
+        }, "")
 
-    result = result.trim()
-
-    return result
+    return formattedSchema.trim()
 }
 
-const enter = (target: string): string => `\n${target}\n`
+const enter = (target: string, removeEnter: boolean = false): string =>
+    `${removeEnter ? "" : "\n"}${target}`
 
+type PrintOptions = {
+    tab?: number
+    removeEnter?: boolean
+}
+/**
+ * @description Print object in pretty format
+ */
 export const prettyPrint = (
     target: unknown,
-    tab: number = TAB_NUMBER
-): string => enter(JSON.stringify(target, null, tab))
-
+    arg: PrintOptions = {
+        tab: TAB_NUMBER,
+        removeEnter: false,
+    }
+): string => enter(JSON.stringify(target, null, arg.tab), arg.removeEnter)
+/**
+ * @description Print schema in pretty format
+ * @param schemaInformation {@link SchemaInformation}
+ */
 export const logSchema = (
     schemaInformation: SchemaInformation<string, unknown>,
-    tab: number = TAB_NUMBER
-): string => enter(formatString(formatTypeSchema(schemaInformation), tab))
+    arg: PrintOptions = {
+        tab: TAB_NUMBER,
+        removeEnter: false,
+    }
+): string =>
+    enter(
+        formatSchemaString(formatTypeSchema(schemaInformation), arg.tab),
+        arg.removeEnter
+    )
