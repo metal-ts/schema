@@ -34,9 +34,9 @@ export class SchemaErrorStack {
         const messageLength = this._errorStack.length
         const stackMessages: string = this._errorStack.reduceRight<string>(
             (acc, cause, number) => {
-                const currStackMessage = `${acc ? `${acc}\n` : ""}[ error${
+                const currStackMessage = `${acc ? `${acc}\n` : ""}[Err_${
                     messageLength - number
-                }: ${cause.error_type} ]: ${cause.message}`
+                }] ${cause.error_type} ${cause.message}`
                 return currStackMessage
             },
             ""
