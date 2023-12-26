@@ -105,8 +105,10 @@ export class MetalError extends Error {
         givenValue: unknown,
         additionalMessage?: string
     ): string {
-        return `Expected type ${type}, but received ${typeof givenValue} - ${prettyPrint(
-            givenValue
-        )}${additionalMessage ? `\n${additionalMessage}` : ""}`
+        return `\n› Expected: ${type.toLowerCase()}\n› Received: ${
+            typeof givenValue === "object"
+                ? prettyPrint(givenValue)
+                : givenValue
+        } ${additionalMessage ? `\n› Check: ${additionalMessage}` : ""}\n`
     }
 }
