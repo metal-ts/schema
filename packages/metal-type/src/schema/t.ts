@@ -1,4 +1,3 @@
-import type { TOTAL_TYPE_UNIT_NAMES } from "../interface"
 import { ArraySchema } from "./array"
 import { ObjectSchema } from "./object"
 import { PrimitiveSchema } from "./primitives"
@@ -46,48 +45,23 @@ class MetalType {
 
     public object = <ObjectShape extends schema.ObjectSchemaRecord>(
         objectShape: ObjectShape
-    ): ObjectSchema<"OBJECT", ObjectShape, ObjectShape> =>
-        new ObjectSchema<"OBJECT", ObjectShape, ObjectShape>(
-            "OBJECT",
-            objectShape
-        )
+    ): ObjectSchema<ObjectShape, ObjectShape> =>
+        new ObjectSchema<ObjectShape, ObjectShape>(objectShape)
 
     public array = <ArrayShape extends schema.SchemaShape>(
         arrayShape: ArrayShape
-    ): ArraySchema<"ARRAY", ArrayShape, ArrayShape> =>
-        new ArraySchema<"ARRAY", ArrayShape, ArrayShape>("ARRAY", arrayShape)
+    ): ArraySchema<ArrayShape, ArrayShape> =>
+        new ArraySchema<ArrayShape, ArrayShape>(arrayShape)
 
     public tuple = <const TupleShape extends readonly schema.SchemaShape[]>(
         tupleShape: TupleShape
-    ): TupleSchema<"TUPLE", TupleShape, TupleShape> =>
-        new TupleSchema<"TUPLE", TupleShape, TupleShape>("TUPLE", tupleShape)
+    ): TupleSchema<TupleShape, TupleShape> =>
+        new TupleSchema<TupleShape, TupleShape>(tupleShape)
 
-    public union = <const UnionShape extends readonly schema.SchemaShape[]>(
+    public union = <const UnionShape extends schema.SchemaShape[]>(
         ...unionShape: UnionShape
-    ): UnionSchema<"UNION", UnionShape, UnionShape[number]> =>
-        new UnionSchema<"UNION", UnionShape, UnionShape[number]>(
-            "UNION",
-            unionShape
-        )
-    /**
-     * @description Create custom schema with input and output type
-     * @param name name of the schema
-     * @param internalValidator validation unit of the schema
-     * @param label label of the schema
-     * @param transformer transformer of the schema
-     */
-    public custom = <Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input>(
-        name: Name,
-        internalValidator: schema.ValidationUnit<unknown>,
-        label?: string | undefined,
-        transformer?: schema.Transformer<Input, Output> | undefined
-    ): schema.Schema<Name, Input, Output> =>
-        new schema.Schema<Name, Input, Output>(
-            name,
-            internalValidator,
-            label,
-            transformer
-        )
+    ): UnionSchema<UnionShape, UnionShape[number]> =>
+        new UnionSchema<UnionShape, UnionShape[number]>(unionShape)
 }
 
 export const t = MetalType.create()
