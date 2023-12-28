@@ -1,14 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type MetalCause, MetalError } from "../error"
 import { SchemaErrorStack } from "../error/schema.error.stack"
-import type { Infer, TOTAL_TYPE_UNIT_NAMES } from "../interface"
+import type { Infer, SchemaNames, WITH_MARK } from "../interface"
 import { prettyPrint } from "../utils"
 
 /**
  * @description Schema logging information
  */
 export type SchemaInformation<Name extends string, Shape = unknown> = {
+    /**
+     * @description Schema type name
+     */
     type: Name
+    /**
+     * @description Schema shape
+     */
     shape: Shape
 }
 
@@ -46,9 +52,10 @@ export const validator = <Input>(
 type HardTransformer<Input extends SchemaShape, Output extends SchemaShape> = (
     target: Input
 ) => Output
+
 export type Transformer<Input, Output> = Output extends SchemaShape
     ? never
-    : (target: Infer<Input>, errorStack: SchemaErrorStack) => Output
+    : (target: Input, errorStack: SchemaErrorStack) => Output
 /**
  * @description Create transformation unit
  * @example
@@ -72,34 +79,15 @@ export const transformer = <Input, Output>(
     func: Transformer<Input, Output>
 ): Transformer<Input, Output> => func
 
-export abstract class AbstractSchema {
-    /**
-     * @description optional, `OutputType | undefined`
-     */
-    public abstract optional(): unknown
-    /**
-     * @description nullable, `OutputType | null`
-     */
-    public abstract nullable(): unknown
-    /**
-     * @description nullish, `OutputType | null | undefined`
-     */
-    public abstract nullish(): unknown
-    /**
-     * @description Schema shape
-     */
-    public abstract get shape(): unknown
-}
-
 /**
  * @description Schema core
  */
-export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
+export class Schema<Name extends SchemaNames, Input, Output = Input> {
     public constructor(
         private readonly _name: Name,
         protected readonly internalValidator: ValidationUnit<unknown>,
         private _label?: string,
-        protected readonly transformer?: Transformer<Input, Output>
+        private readonly transformer?: Transformer<Input, Output>
     ) {
         this.$errorStack = new SchemaErrorStack()
     }
@@ -122,10 +110,80 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     public get type(): Lowercase<Name> {
         return this._name.toLowerCase() as Lowercase<Name>
     }
+    public get shape(): unknown {
+        return this.type
+    }
+
+    public get nameDetail(): WITH_MARK<Name> {
+        if (this.isOptional && this.isNullable)
+            return `${this.name} | NULL | UNDEFINED`
+        if (this.isOptional && !this.isNullable)
+            return `${this.name} | UNDEFINED`
+        if (!this.isOptional && this.isNullable) return `${this.name} | NULL`
+        return this.name
+    }
+
     /**
-     * @description Schema default value
+     * @description Schema detail information for debugging
      */
-    public defaultValue?: Infer<Schema<Name, Input, Output>> | null = null
+    public get schemaDetail(): SchemaInformation<WITH_MARK<Name>> {
+        return {
+            type: this.nameDetail,
+            shape: this.type,
+        }
+    }
+
+    public isOptional: boolean = false
+    public optional(): Schema<Name, Input, Output | undefined> {
+        const schema = new Schema<Name, Input, Output | undefined>(
+            this._name,
+            this.internalValidator,
+            this._label,
+            this.transformer
+        )
+        this.setSchemaType(schema, "optional")
+        return schema
+    }
+    protected setSchemaType<Schema extends SchemaShape>(
+        target: Schema,
+        type: "optional" | "nullish" | "nullable"
+    ): void {
+        switch (type) {
+            case "optional":
+                target.isOptional = true
+                break
+            case "nullable":
+                target.isNullable = true
+                break
+            case "nullish":
+                target.isNullable = true
+                target.isOptional = true
+                break
+        }
+        target.injectErrorStack(this.$errorStack)
+    }
+
+    public isNullable: boolean = false
+    public nullable(): Schema<Name, Input, Output | null> {
+        const schema = new Schema<Name, Input, Output | null>(
+            this._name,
+            this.internalValidator,
+            this._label,
+            this.transformer
+        )
+        this.setSchemaType(schema, "nullable")
+        return schema
+    }
+    public nullish(): Schema<Name, Input, Output | null | undefined> {
+        const schema = new Schema<Name, Input, Output | null | undefined>(
+            this._name,
+            this.internalValidator,
+            this._label,
+            this.transformer
+        )
+        this.setSchemaType(schema, "nullish")
+        return schema
+    }
 
     protected $errorStack: SchemaErrorStack
 
@@ -173,126 +231,66 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
             const pipeError = new MetalError({
                 code: "VALIDATION",
                 expectedType: this._name,
-                manager: this.$errorStack,
+                stack: this.$errorStack,
             })
             throw pipeError
         }
     }
 
+    private checkParseMode(target: unknown): boolean {
+        if (this.isOptional && target === undefined) return true
+        if (this.isNullable && target === null) return true
+        if (
+            this.isNullable &&
+            this.isOptional &&
+            (target === null || target === undefined)
+        )
+            return true
+
+        return false
+    }
+
     private performValidate(
         target: unknown
     ): Infer<Schema<Name, Input, Output>> {
+        if (this.checkParseMode(target)) {
+            return target as Infer<Schema<Name, Input, Output>>
+        }
+
         if (!this.internalValidator(target, this.$errorStack)) {
             throw new MetalError({
                 code: "VALIDATION",
                 expectedType: this._name,
-                manager: this.$errorStack,
+                stack: this.$errorStack,
             })
         }
 
-        if (this.shouldPerformCustomValidation)
+        if (this.shouldPerformCustomValidation) {
             this.passValidationPipes(
                 target as Infer<Schema<Name, Input, Output>>
             )
+        }
 
         return target as Infer<Schema<Name, Input, Output>>
     }
 
-    protected createOptional<SchemaInstance extends SchemaShape>(
-        getSchema: (validator: ValidationUnit<unknown>) => SchemaInstance
-    ): SchemaInstance {
-        const withOptionalValidator: ValidationUnit<unknown> = (
-            target,
-            error
-        ) => {
-            const isOptional =
-                this.internalValidator(target, this.$errorStack) ||
-                target === undefined
-
-            if (!isOptional) {
-                error.push({
-                    error_type: "expected undefined",
-                    message: MetalError.formatTypeError(
-                        `${this._name} | undefined`,
-                        target
-                    ),
-                })
-            }
-            return isOptional
-        }
-        const schema = getSchema(withOptionalValidator)
-        // schema.injectErrorStack(this.$errorStack)
-        return schema
-    }
-
-    protected createNullable<SchemaInstance extends SchemaShape>(
-        getSchema: (validator: ValidationUnit<unknown>) => SchemaInstance
-    ): SchemaInstance {
-        const withNullableValidator: ValidationUnit<unknown> = (
-            target,
-            error
-        ) => {
-            const isNullable =
-                this.internalValidator(target, this.$errorStack) ||
-                target === null
-
-            if (!isNullable) {
-                error.push({
-                    error_type: "expected null",
-                    message: MetalError.formatTypeError(
-                        `${this.type} | null`,
-                        target
-                    ),
-                })
-            }
-            return isNullable
-        }
-        const schema = getSchema(withNullableValidator)
-        schema.injectErrorStack(this.$errorStack)
-        return schema
-    }
-
-    protected createNullish<SchemaInstance extends SchemaShape>(
-        getSchema: (validator: ValidationUnit<unknown>) => SchemaInstance
-    ): SchemaInstance {
-        const withNullishValidator: ValidationUnit<unknown> = (
-            target,
-            error
-        ) => {
-            const isNullish =
-                this.internalValidator(target, this.$errorStack) ||
-                target === null ||
-                target === undefined
-
-            if (!isNullish) {
-                error.push({
-                    error_type: "expected null | undefined",
-                    message: MetalError.formatTypeError(
-                        `${this.type} | null | undefined`,
-                        target
-                    ),
-                })
-            }
-            return isNullish
-        }
-        const schema = getSchema(withNullishValidator)
-        schema.injectErrorStack(this.$errorStack)
-        return schema
-    }
-
     /**
      * @description Add transformer
-     * @param transformer transformer function
+     * @param transformer {@link transformer}
      */
     public transform<NewOutput>(
-        transformer: Transformer<Output, NewOutput>
-    ): Schema<`${Name}_TRANSFORMED`, Output, NewOutput> {
-        return new Schema(
-            `${this._name}_TRANSFORMED`,
+        transformer: Transformer<Infer<Schema<Name, Input, Output>>, NewOutput>
+    ): Schema<Name, Output, NewOutput> {
+        const transformed = new Schema<Name, Output, NewOutput>(
+            this._name,
             this.internalValidator,
             this._label,
-            transformer
+            transformer as Transformer<Output, NewOutput>
         )
+        transformed.isOptional = this.isOptional
+        transformed.isNullable = this.isNullable
+        transformed.injectErrorStack(this.$errorStack)
+        return transformed
     }
 
     /**
@@ -311,27 +309,30 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     private processTransformation(
         input: Infer<Schema<Name, Input, Output>>
     ): Infer<Schema<Name, Input, Output>> {
-        if (!this.transformer)
-            return input as Infer<Schema<Name, Input, Output>>
+        if (!this.transformer) {
+            return input
+        }
 
         try {
-            const transformerSchema = this.transformer(
-                input as Infer<Input>,
-                this.$errorStack
-            )
+            const transformerSchema = (
+                this.transformer as Transformer<
+                    Infer<Schema<Name, Input, Output>>,
+                    Output
+                >
+            )(input, this.$errorStack)
 
-            if (transformerSchema instanceof Schema)
+            if (transformerSchema instanceof Schema) {
                 return transformerSchema.parse(input)
+            }
 
             return transformerSchema as Infer<Schema<Name, Input, Output>>
         } catch (e) {
-            if (e instanceof MetalError) {
-                throw e
-            }
+            if (e instanceof MetalError) throw e
+
             throw new MetalError({
                 code: "TRANSFORMATION",
                 expectedType: this._name,
-                manager: this.$errorStack,
+                stack: this.$errorStack,
             })
         }
     }
@@ -340,33 +341,34 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
      * @description Clone schema
      */
     public clone(): Schema<Name, Input, Output> {
-        const cloned = new Schema(
+        const cloned = new Schema<Name, Input, Output>(
             this._name,
             this.internalValidator,
             this._label,
             this.transformer
         )
+        cloned.isOptional = this.isOptional
+        cloned.isNullable = this.isNullable
         return cloned
     }
 
     /**
-     * @description Add validation unit
-     * @param validatorUnits validation units
+     * @description Add validation units
+     * @param validatorUnits {@link validator}
      */
     public validate(
         ...validatorUnits: Array<
             ValidationUnit<Infer<Schema<Name, Input, Output>>>
         >
     ): Schema<Name, Input, Output> {
-        const cloned = this.clone()
+        const cloned: Schema<Name, Input, Output> = this.clone()
         cloned.validationPipes.push(...validatorUnits)
         return cloned
     }
 
     /**
-     * @description parse
+     * @description Parse unknown data
      * @param target unknown parse target
-     * @returns validated - transformed target
      */
     public parse(target: unknown): Infer<Schema<Name, Input, Output>> {
         const validated: Infer<Schema<Name, Input, Output>> =
@@ -375,14 +377,13 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
     }
 
     /**
-     * @description safe parse
+     * @description Parse unknown data safely, without throwing error
      * @param target unknown parse target
-     * @param defaultValue default value
-     * @returns do not throw error, return error object
+     * @param fallbackValue default value
      */
     public safeParse(
         target: unknown,
-        defaultValue: Infer<Schema<Name, Input, Output>>
+        fallbackValue: Infer<Schema<Name, Input, Output>>
     ):
         | {
               success: true
@@ -394,8 +395,6 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
               error: string
               cause: Array<MetalCause>
           } {
-        this.default(defaultValue)
-
         try {
             const parsed = this.parse(target)
             return {
@@ -406,14 +405,14 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
             if (e instanceof MetalError)
                 return {
                     success: false,
-                    value: defaultValue as Infer<Schema<Name, Input, Output>>,
+                    value: fallbackValue as Infer<Schema<Name, Input, Output>>,
                     error: e.message,
                     cause: e.cause,
                 }
 
             return {
                 success: false,
-                value: defaultValue as Infer<Schema<Name, Input, Output>>,
+                value: fallbackValue as Infer<Schema<Name, Input, Output>>,
                 error: `Metal-type unknown error occurred.\n${prettyPrint(e)}`,
                 cause: [
                     {
@@ -453,33 +452,18 @@ export class Schema<Name extends TOTAL_TYPE_UNIT_NAMES, Input, Output = Input> {
         throw new MetalError({
             code: "VALIDATION",
             expectedType: this._name,
-            manager: this.$errorStack,
+            stack: this.$errorStack,
         })
-    }
-
-    /**
-     * @description Set default value
-     */
-    public default(defaultValue: Infer<Schema<Name, Input, Output>>) {
-        this.defaultValue = defaultValue
-        return this
-    }
-
-    /**
-     * @description Schema detail information for debugging
-     */
-    public get schemaDetail(): SchemaInformation<Name> {
-        return {
-            type: this.name,
-            shape: this.type,
-        }
     }
 }
 
 /**
- * @description it might be a schema
+ * @description Metal type schema instance
  */
 export type SchemaShape = Schema<string, any, any>
+/**
+ * @description Extract schema I/O type
+ */
 export type InferSchemaInputOutput<T extends SchemaShape> = T extends Schema<
     string,
     infer Input,
