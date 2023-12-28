@@ -303,32 +303,34 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
             "should parse object -> deep partial & nested filter ignored for performance"
         ),
         () => {
-            const DeepPartialSchema = t.object({
-                name: t.literal("name"),
-                maxNumber: t.number,
-                string: t.string,
-                longString: t.string,
-                boolean: t.boolean,
-                deeplyNested: t.object({
-                    foo: t.string,
-                    num: t.number,
-                    bool: t.boolean,
-                    nested: t.object({
+            const StrictDeepPartial = t
+                .object({
+                    name: t.literal("name"),
+                    maxNumber: t.number,
+                    string: t.string,
+                    longString: t.string,
+                    boolean: t.boolean,
+                    deeplyNested: t.object({
                         foo: t.string,
                         num: t.number,
                         bool: t.boolean,
-                        nested: t
-                            .object({
-                                foo: t.string,
-                                num: t.number,
-                                bool: t.boolean,
-                            })
-                            .filter(),
+                        nested: t.object({
+                            foo: t.string,
+                            num: t.number,
+                            bool: t.boolean,
+                            nested: t
+                                .object({
+                                    foo: t.string,
+                                    num: t.number,
+                                    bool: t.boolean,
+                                })
+                                .filter()
+                                .strict(),
+                        }),
                     }),
-                }),
-            })
-            // .deepPartial()
-            const StrictDeepPartial = DeepPartialSchema.strict()
+                })
+                .deepPartial()
+                .strict()
 
             const validateData = {
                 name: "name",
@@ -497,13 +499,11 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
     })
 
     it(label.case("should extend object"), () => {
-        const ExtendFirstSchema = t
-            .object({
-                hey: t.string,
-                hello: t.string,
-                hallo: t.string,
-            })
-            .deepPartial()
+        const ExtendFirstSchema = t.object({
+            "hey?": t.string,
+            hello: t.string,
+            hallo: t.string,
+        })
 
         const ExtendSchema = t
             .object({
@@ -555,23 +555,48 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
                 email: t.string.validate(isEmail, min(2), max(20)),
                 name: t.string,
             })
-            .transform((e) => ({
-                email: e.email,
-                name: e.name,
-                length: e.email.length,
-                names: e.name.split(" "),
-            }))
-
+            .transform((e) => {
+                return {
+                    email: e.email,
+                    name: e.name,
+                    length: e.email.length,
+                    names: e.name.split(" "),
+                }
+            })
         const validateData = {
             email: "test@gmail.com",
             name: "test name",
         }
         const res = TransformSchema.parse(validateData)
         expect(res).toStrictEqual({
-            email: "test@gmail.com",
-            name: "test name",
             length: 14,
+            name: "test name",
+            email: "test@gmail.com",
             names: ["test", "name"],
         })
+    })
+
+    it(label.case("should extract object keys"), () => {
+        const Keys = t
+            .object({
+                a: t.string,
+                b: t.number,
+                c: t.boolean,
+                d: t.null,
+                e: t.undefined,
+            })
+            .keyof()
+
+        const keysA = Keys.parse("a")
+        const keysB = Keys.parse("b")
+        const keysC = Keys.parse("c")
+        const keysD = Keys.parse("d")
+        const keysE = Keys.parse("e")
+
+        expect(keysA).toStrictEqual("a")
+        expect(keysB).toStrictEqual("b")
+        expect(keysC).toStrictEqual("c")
+        expect(keysD).toStrictEqual("d")
+        expect(keysE).toStrictEqual("e")
     })
 })
