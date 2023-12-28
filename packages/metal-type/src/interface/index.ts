@@ -1,2 +1,3 @@
 export * from "./infer"
-export * from "./type"
+export * from "./schema.names"
+export * from "./util"
