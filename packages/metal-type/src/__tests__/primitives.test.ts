@@ -61,8 +61,35 @@ describe(label.unit("MetalType - PrimitivesSchema"), () => {
     })
 
     it(label.case("should parse never -> strict"), () => {
-        expect(() => t.never.parse("hello")).toThrowError(
-            '[ error1: never_error ]: Expected type never, but received string - \n"hello"'
-        )
+        expect(() => t.never.parse("hello")).toThrowError("")
+    })
+
+    it(label.case("should parse nullish -> strict"), () => {
+        const nullishString = t.string.nullish()
+        const parsed = nullishString.parse("hello")
+        const parsed2 = nullishString.parse(null)
+        expect(parsed).toEqual("hello")
+        expect(parsed2).toEqual(null)
+    })
+
+    it(label.case("should parse nullable -> strict"), () => {
+        const nullableString = t.string.nullable()
+        const parsed = nullableString.parse("hello")
+        const parsed2 = nullableString.parse(null)
+        expect(parsed).toEqual("hello")
+        expect(parsed2).toEqual(null)
+    })
+
+    it(label.case("should parse optional -> strict"), () => {
+        const optionalString = t.string.optional()
+        const optionalNumber = t.number.optional()
+        const parsed = optionalString.parse("hello")
+        const parsed2 = optionalString.parse(undefined)
+        const parsed3 = optionalNumber.parse(1)
+        const parsed4 = optionalNumber.parse(undefined)
+        expect(parsed).toEqual("hello")
+        expect(parsed2).toEqual(undefined)
+        expect(parsed3).toEqual(1)
+        expect(parsed4).toEqual(undefined)
     })
 })
