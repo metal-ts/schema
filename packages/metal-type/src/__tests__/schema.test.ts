@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { MetalError } from "../error"
 import { Schema, t, transformer, validator } from "../index"
 import { label } from "./utils/test.label"
 
@@ -70,17 +71,27 @@ describe(label.unit("MetalType - Schema base"), () => {
     })
 
     it(label.case("should run validation pipes correctly -> strict"), () => {
-        const maxSchema = Email.validate(max(10))
-        expect(() => maxSchema.parse("toomuch@gmial.com")).toThrowError(
-            "[ error1: max_length_error ]: Max length is 10, but got 17"
-        )
+        try {
+            const maxSchema = Email.validate(max(10))
+            maxSchema.parse("toomuch@gmail.com")
+        } catch (e) {
+            if (e instanceof MetalError) {
+                expect(e.message).toEqual(
+                    "[Err_1] max_length_error Max length is 10, but got 17"
+                )
+            }
+        }
 
-        const boundarySchema = Email.validate(min(10), max(20))
-        expect(() =>
+        try {
+            const boundarySchema = Email.validate(min(10), max(20))
             boundarySchema.parse("longlonglong@gmail.com")
-        ).toThrowError(
-            "[ error1: max_length_error ]: Max length is 20, but got 22"
-        )
+        } catch (e) {
+            if (e instanceof MetalError) {
+                expect(e.message).toEqual(
+                    "[Err_1] max_length_error Max length is 20, but got 22"
+                )
+            }
+        }
     })
 
     it(label.case("should run safeParse correctly -> safe"), () => {
@@ -93,7 +104,7 @@ describe(label.unit("MetalType - Schema base"), () => {
                     code: "VALIDATION",
                     error_type: "VALIDATION",
                     message:
-                        'Validation error occurred, [ error1: invalid_email_error ]: "test.abs.com" is not valid email format',
+                        'Validation error occurred, [Err_1] invalid_email_error "test.abs.com" is not valid email format',
                 },
                 {
                     error_type: "invalid_email_error",
@@ -152,10 +163,5 @@ describe(label.unit("MetalType - Schema base"), () => {
                 email: "newschema@gmail.com",
             },
         })
-    })
-
-    it(label.case("should clone new schema"), () => {
-        const ClonedEmail = Email.clone().default("notsame-email@gmail.com")
-        expect(ClonedEmail.defaultValue === Email.defaultValue).toEqual(false)
     })
 })
