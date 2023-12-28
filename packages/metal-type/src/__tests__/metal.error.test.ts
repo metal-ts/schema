@@ -1,10 +1,7 @@
-/* eslint-disable import/no-unresolved */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-import { label } from "packages/metal-type/src/__tests__/utils/test.label"
 import { describe, expect, it } from "vitest"
 import { MetalError } from "../error/metal.error"
 import { SchemaErrorStack } from "../error/schema.error.stack"
+import { label } from "./utils/test.label"
 
 describe(label.unit("MetalError - error stack"), () => {
     const eStack = new SchemaErrorStack()
@@ -43,7 +40,7 @@ describe(label.unit("MetalError - error stack"), () => {
             message: `"not-valid-email" is not valid email format`,
         })
         expect(eStack.messages).toEqual(
-            '[ error1: invalid_email_error ]: "not-valid-email" is not valid email format\n[ error2: email_type_error ]: Email should be string'
+            '[Err_1] invalid_email_error "not-valid-email" is not valid email format\n[Err_2] email_type_error Email should be string'
         )
     })
 
@@ -52,7 +49,7 @@ describe(label.unit("MetalError - error stack"), () => {
             const error = new MetalError({
                 code: "VALIDATION",
                 expectedType: "string",
-                manager: eStack,
+                stack: eStack,
             })
             throw error
         } catch (e: unknown) {
@@ -60,14 +57,14 @@ describe(label.unit("MetalError - error stack"), () => {
                 expect(e.name).toEqual("VALIDATION")
                 expect(e.expectedType).toEqual("string")
                 expect(e.message).toEqual(
-                    '[ error1: invalid_email_error ]: "not-valid-email" is not valid email format\n[ error2: email_type_error ]: Email should be string'
+                    '[Err_1] invalid_email_error "not-valid-email" is not valid email format\n[Err_2] email_type_error Email should be string'
                 )
                 expect(e.cause).toStrictEqual([
                     {
                         code: "VALIDATION",
                         error_type: "VALIDATION",
                         message:
-                            'Validation error occurred, [ error1: invalid_email_error ]: "not-valid-email" is not valid email format\n[ error2: email_type_error ]: Email should be string',
+                            'Validation error occurred, [Err_1] invalid_email_error "not-valid-email" is not valid email format\n[Err_2] email_type_error Email should be string',
                     },
                     {
                         error_type: "email_type_error",
