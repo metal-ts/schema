@@ -1,22 +1,35 @@
 import type { SchemaInformation } from "../schema/schema"
 
+const extractType = (name: string): { category: string; detail: string[] } => {
+    const types = name.split("|").map((e) => e.toLowerCase().trim())
+    const typeCategory = types[0]!.toUpperCase()!
+
+    return {
+        category: typeCategory,
+        detail: types.slice(1),
+    }
+}
 const formatTypeSchema = (
     schema: SchemaInformation<string, unknown>
 ): string => {
-    const pureSchemaType = schema.type.split(" ")[0]
-    switch (pureSchemaType) {
+    const { category, detail } = extractType(schema.type)
+
+    const detailUnion = detail.length !== 0 ? ` | ${detail.join(" | ")}` : ""
+    switch (category) {
         case "TUPLE": {
             return `readonly [${(
                 schema.shape as Array<SchemaInformation<string, unknown>>
             )
                 .map(formatTypeSchema)
-                .join(", ")}]`
+                .join(", ")}]${detailUnion}`
         }
 
         case "UNION":
-            return (schema.shape as Array<SchemaInformation<string, unknown>>)
+            return `${(
+                schema.shape as Array<SchemaInformation<string, unknown>>
+            )
                 .map(formatTypeSchema)
-                .join(" | ")
+                .join(" | ")}${detailUnion}`
 
         case "OBJECT": {
             const shapes = schema.shape as Record<
@@ -32,13 +45,13 @@ const formatTypeSchema = (
 
                 return `${key}: ${formatTypeSchema(propertySchema)}`
             })
-            return `{${objectShape.join(", ")}}`
+            return `{${objectShape.join(", ")}}${detailUnion}`
         }
 
         case "ARRAY":
             return `Array<${formatTypeSchema(
                 schema.shape as SchemaInformation<string, unknown>
-            )}>`
+            )}>${detailUnion}`
 
         // case "MAP":
         //     return `Map<${formatTypeSchema(
@@ -113,23 +126,23 @@ type PrintOptions = {
  */
 export const prettyPrint = (
     target: unknown,
-    arg: PrintOptions = {
+    option: PrintOptions = {
         tab: TAB_NUMBER,
         removeEnter: false,
     }
-): string => enter(JSON.stringify(target, null, arg.tab), arg.removeEnter)
+): string => enter(JSON.stringify(target, null, option.tab), option.removeEnter)
 /**
  * @description Print schema in pretty format
  * @param schemaInformation {@link SchemaInformation}
  */
 export const logSchema = (
     schemaInformation: SchemaInformation<string, unknown>,
-    arg: PrintOptions = {
+    option: PrintOptions = {
         tab: TAB_NUMBER,
         removeEnter: false,
     }
 ): string =>
     enter(
-        formatSchemaString(formatTypeSchema(schemaInformation), arg.tab),
-        arg.removeEnter
+        formatSchemaString(formatTypeSchema(schemaInformation), option.tab),
+        option.removeEnter
     )
