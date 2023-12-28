@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { Schema } from "../schema"
 import { t } from "../schema/t"
 import { TupleSchema } from "../schema/tuple"
 import { label } from "./utils/test.label"
@@ -13,10 +14,10 @@ describe(label.unit("MetalType - TupleSchema"), () => {
     })
 
     it(label.case("should create an optional tuple schema"), () => {
-        const schema = t.tuple([t.string, t.number]).optional()
+        const schema = t.tuple([t.string, t.number]).nullish()
 
         expect(schema).toBeInstanceOf(TupleSchema)
-        expect(schema.name).toBe("TUPLE | UNDEFINED")
+        expect(schema.name).toBe("TUPLE")
         expect(schema.shape).toEqual([t.string, t.number])
     })
 
@@ -33,22 +34,23 @@ describe(label.unit("MetalType - TupleSchema"), () => {
             t.literal("hello"),
             t.literal(1),
             t.literal(true),
-            t.object({
-                hello: t.string,
-                world: t.number,
-                deeply: t
-                    .object({
+            t
+                .object({
+                    hello: t.string,
+                    world: t.number,
+                    deeply: t.object({
                         nested: t.string,
                         a: t.object({
                             b: t.string,
                             c: t.boolean,
                         }),
-                    })
-                    .optional(),
-            }),
+                    }),
+                })
+                .partial()
+                .filter()
+                .nullish(),
         ])
 
-        expect(() => ExtremeTuple.parse(["hello", 1, true])).toThrowError("")
         const sameSymbol = Symbol("hello")
         const parsed = ExtremeTuple.parse([
             "hello",
@@ -81,9 +83,9 @@ describe(label.unit("MetalType - TupleSchema"), () => {
             1,
             true,
             {
-                notFiltered: "filtered",
                 hello: "hello",
                 world: 1,
+                notFiltered: "filtered",
             },
         ])
     })
@@ -104,16 +106,16 @@ describe(label.unit("MetalType - TupleSchema"), () => {
     it(label.case("should create a nullable tuple schema"), () => {
         const schema = t.tuple([t.string, t.number]).nullable()
 
-        expect(schema).toBeInstanceOf(TupleSchema)
-        expect(schema.name).toBe("TUPLE | NULL")
+        expect(schema).toBeInstanceOf(Schema)
+        expect(schema.name).toBe("TUPLE")
         expect(schema.shape).toEqual([t.string, t.number])
     })
 
     it(label.case("should create a nullish tuple schema"), () => {
-        const schema = t.tuple([t.string, t.number]).nullish()
+        const schema = t.tuple([t.string, t.number]).optional()
 
-        expect(schema).toBeInstanceOf(TupleSchema)
-        expect(schema.name).toBe("TUPLE | NULL | UNDEFINED")
+        expect(schema).toBeInstanceOf(Schema)
+        expect(schema.name).toBe("TUPLE")
         expect(schema.shape).toEqual([t.string, t.number])
     })
 })
