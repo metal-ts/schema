@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
-import { SchemaErrorStack } from "../error/schema.error.stack"
-import type { Infer, WITH_NAME_NOTATION } from "../interface"
+import type { SchemaErrorStack } from "../error/schema.error.stack"
+import type { Infer, WITH_MARK } from "../interface"
 import { logSchema } from "../utils"
 import {
-    type AbstractSchema,
     Schema,
     type SchemaInformation,
     type SchemaShape,
@@ -12,20 +11,11 @@ import {
 } from "./schema"
 
 export class UnionSchema<
-        Name extends WITH_NAME_NOTATION<"UNION">,
-        const Input extends readonly SchemaShape[],
-        const Output = Input[number],
-    >
-    extends Schema<Name, Input, Output>
-    implements AbstractSchema
-{
-    constructor(
-        name: Name,
-        private readonly _unionShape: Input,
-        extraValidator?: ValidationUnit<unknown>
-    ) {
+    const Input extends SchemaShape[],
+    const Output = Input[number],
+> extends Schema<"UNION", Input, Output> {
+    constructor(private readonly _unionShape: Input) {
         const unionValidator: ValidationUnit<unknown> = (target, e) => {
-            // const tempShape = this.shape
             const matchedUnionLocation = this._unionShape.findIndex((schema) =>
                 schema.is(target)
             )
@@ -42,10 +32,9 @@ export class UnionSchema<
                 })
             }
 
-            if (isValidUnion) return true
-            return extraValidator?.(target, e) ?? false
+            return isValidUnion
         }
-        super(name, unionValidator)
+        super("UNION", unionValidator)
         this.injectErrorStack(this.$errorStack)
     }
     public override injectErrorStack(errorStack: SchemaErrorStack): void {
@@ -56,7 +45,9 @@ export class UnionSchema<
     }
 
     private parseSelectedSchema: number = -1
-    public override parse(target: unknown): Infer<Schema<Name, Input, Output>> {
+    public override parse(
+        target: unknown
+    ): Infer<Schema<"UNION", Input, Output>> {
         if (this.internalValidator(target, this.$errorStack)) {
             const parsed =
                 this._unionShape[this.parseSelectedSchema]!.parse(target)
@@ -68,16 +59,16 @@ export class UnionSchema<
         throw new MetalError({
             code: "VALIDATION",
             expectedType: this.name,
-            manager: this.$errorStack,
+            stack: this.$errorStack,
         })
     }
 
     public override get schemaDetail(): SchemaInformation<
-        Name,
+        WITH_MARK<"UNION">,
         Array<SchemaInformation<string, unknown>>
     > {
         return {
-            type: this.name,
+            type: this.nameDetail,
             shape: this._unionShape.map((schema) => schema.schemaDetail),
         }
     }
@@ -85,43 +76,9 @@ export class UnionSchema<
     /**
      * @description Get the union shape
      */
-    public get shape(): Input {
+    public override get shape(): Input {
         return this._unionShape.map((schema) =>
             schema.clone()
         ) as unknown as Input
     }
-
-    public optional = (): UnionSchema<Name, Input, Input[number] | undefined> =>
-        this.createOptional(
-            (optionalValidator) =>
-                new UnionSchema<Name, Input, Input[number] | undefined>(
-                    `${this.name} | UNDEFINED` as Name,
-                    this._unionShape,
-                    optionalValidator
-                )
-        )
-
-    public nullable = (): UnionSchema<Name, Input, Input[number] | null> =>
-        this.createNullable(
-            (nullableValidator) =>
-                new UnionSchema<Name, Input, Input[number] | null>(
-                    `${this.name} | NULL` as Name,
-                    this._unionShape,
-                    nullableValidator
-                )
-        )
-
-    public nullish = (): UnionSchema<
-        Name,
-        Input,
-        Input[number] | null | undefined
-    > =>
-        this.createNullish(
-            (nullishValidator) =>
-                new UnionSchema<Name, Input, Input[number] | null | undefined>(
-                    `${this.name} | NULL | UNDEFINED` as Name,
-                    this._unionShape,
-                    nullishValidator
-                )
-        )
 }
