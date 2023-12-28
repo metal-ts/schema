@@ -20,11 +20,11 @@ describe(label.unit("MetalType - ArraySchema"), () => {
         )
         const parsed = arraySchema.parse([
             { hello: "hello", world: 1 },
-            { hello: "world", world: 2, thisShouldBeThrown: true },
+            { hello: "world", world: 20, thisShouldBeThrown: true },
         ])
         expect(parsed).toEqual([
             { hello: "hello", world: 1 },
-            { hello: "world", world: 2 },
+            { hello: "world", world: 20, thisShouldBeThrown: true },
         ])
     })
 
@@ -124,7 +124,7 @@ describe(label.unit("MetalType - ArraySchema"), () => {
             expect(parsed).toEqual([
                 [
                     { hello: "hello", world: 1 },
-                    { hello: "world", world: 2 },
+                    { hello: "world", world: 2, thisShouldBeThrown: true },
                 ],
                 [["hello", "hello", "hello"]],
                 [1, 2, 3],
@@ -139,4 +139,18 @@ describe(label.unit("MetalType - ArraySchema"), () => {
             expect(literalParsed).toEqual([[["hello", "hello", "hello"]]])
         }
     )
+
+    it(label.case("should parse optional | nullable | nullish array"), () => {
+        const arraySchema = t.array(t.number).nullable()
+        const parsed = arraySchema.parse(null)
+        expect(parsed).toEqual(null)
+
+        const arraySchema2 = t.array(t.number).optional()
+        const parsed2 = arraySchema2.parse(undefined)
+        expect(parsed2).toEqual(undefined)
+
+        const arraySchema3 = t.array(t.number).nullish()
+        const parsed3 = arraySchema3.parse(undefined)
+        expect(parsed3).toEqual(undefined)
+    })
 })
