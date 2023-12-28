@@ -1,4 +1,4 @@
-import type { TOTAL_TYPE_UNIT_NAMES } from "../interface/type"
+import type { SchemaNames } from "../interface/schema.names"
 import { prettyPrint } from "../utils"
 import type { SchemaErrorStack } from "./schema.error.stack"
 
@@ -15,8 +15,8 @@ export type MetalCause = BaseCause | CustomCause
 export interface ErrorConstructorOption {
     // eslint-disable-next-line @typescript-eslint/ban-types
     code: "VALIDATION" | "UNSUPPORTED" | "TRANSFORMATION" | (string & {})
-    manager: SchemaErrorStack
-    expectedType: TOTAL_TYPE_UNIT_NAMES
+    stack: SchemaErrorStack
+    expectedType: SchemaNames
     // eslint-disable-next-line @typescript-eslint/ban-types
     startStack?: Function | undefined
 }
@@ -26,9 +26,9 @@ export class MetalError extends Error {
         code,
         expectedType,
         startStack,
-        manager,
+        stack,
     }: ErrorConstructorOption) {
-        const message = manager.messages
+        const message = stack.messages
 
         super(message)
 
@@ -45,7 +45,7 @@ export class MetalError extends Error {
             },
         ])
         // custom cause
-        this.addCause(manager.stack)
+        this.addCause(stack.stack)
 
         Error.captureStackTrace(this, startStack ?? MetalError)
     }
@@ -62,7 +62,7 @@ export class MetalError extends Error {
     /**
      * @description Expected type of the value
      */
-    public readonly expectedType: TOTAL_TYPE_UNIT_NAMES
+    public readonly expectedType: SchemaNames
 
     private static addMessagePrefix = (code: string): string => {
         const capitalizedCode = `${code.charAt(0)}${code
@@ -105,9 +105,11 @@ export class MetalError extends Error {
         givenValue: unknown,
         additionalMessage?: string
     ): string {
-        return `\n› Expected: ${type.toLowerCase()}\n› Received: ${
+        return `\n› Expected: ${type}\n› Received: ${
             typeof givenValue === "object"
-                ? prettyPrint(givenValue)
+                ? givenValue === null
+                    ? givenValue
+                    : prettyPrint(givenValue)
                 : givenValue
         } ${additionalMessage ? `\n› Check: ${additionalMessage}` : ""}\n`
     }
