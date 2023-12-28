@@ -1,29 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
-import { SchemaErrorStack } from "../error/schema.error.stack"
-import type { Infer, WITH_NAME_NOTATION } from "../interface"
+import type { SchemaErrorStack } from "../error/schema.error.stack"
+import type { WITH_MARK } from "../interface"
 import { logSchema } from "../utils"
 import {
-    type AbstractSchema,
     Schema,
-    SchemaInformation,
+    type SchemaInformation,
     type SchemaShape,
-    ValidationUnit,
+    type ValidationUnit,
 } from "./schema"
 
 export class TupleSchema<
-        Name extends WITH_NAME_NOTATION<"TUPLE">,
-        const Input extends readonly SchemaShape[],
-        const Output = Input,
-    >
-    extends Schema<Name, Input, Output>
-    implements AbstractSchema
-{
-    constructor(
-        name: Name,
-        private readonly _tupleShape: Input,
-        extraValidator?: ValidationUnit<unknown>
-    ) {
+    const Input extends readonly SchemaShape[],
+    const Output = Input,
+> extends Schema<"TUPLE", Input, Output> {
+    constructor(private readonly tupleShape: Input) {
         const tupleValidator: ValidationUnit<unknown> = (target, e) => {
             if (!Array.isArray(target)) {
                 e.push({
@@ -37,7 +28,7 @@ export class TupleSchema<
                 return false
             }
 
-            const tupleSchemaLength = this._tupleShape.length
+            const tupleSchemaLength = this.tupleShape.length
             const targetLength = target.length
 
             if (tupleSchemaLength !== targetLength) {
@@ -54,116 +45,76 @@ export class TupleSchema<
 
             for (let i = 0; i < tupleSchemaLength; i++) {
                 const item = target[i]
-                const schema = this._tupleShape[i]
+                const schema = this.tupleShape[i]
 
                 if (!schema || !schema.is(item)) {
                     e.push({
                         error_type: "tuple_error",
                         message: MetalError.formatTypeError(
-                            logSchema(schema!.schemaDetail),
+                            logSchema(this.schemaDetail),
                             target,
-                            `Check tuple index ${i}`
+                            `[index ${i}]`
                         ),
                         tuple_index: i,
                         tuple_value: item,
-                        tuple_expected_type: schema?.schemaDetail,
+                        tuple_expected_type: this.schemaDetail,
                     })
                     return false
                 }
             }
 
-            if (extraValidator) extraValidator(target, e)
-
             return true
         }
 
-        super(name, tupleValidator)
+        super("TUPLE", tupleValidator)
         this.injectErrorStack(this.$errorStack)
     }
 
     /**
      * @description Get the tuple shape
      */
-    public get shape(): Input {
-        return this._tupleShape.map((s) => s.clone()) as unknown as Input
+    public override get shape(): Input {
+        return this.tupleShape.map((s) => s.clone()) as unknown as Input
     }
 
     public override injectErrorStack(errorStack: SchemaErrorStack): void {
-        this._tupleShape.forEach((schema) => {
+        this.tupleShape.forEach((schema) => {
             schema.injectErrorStack(errorStack)
             super.injectErrorStack(errorStack)
         })
     }
 
+    public override optional(): TupleSchema<Input, Output | undefined> {
+        const optionalSchema = new TupleSchema<Input, Output | undefined>(
+            this.tupleShape
+        )
+        this.setSchemaType(optionalSchema, "optional")
+        return optionalSchema
+    }
+
+    public override nullable(): TupleSchema<Input, Output | null> {
+        const nullableSchema = new TupleSchema<Input, Output | null>(
+            this.tupleShape
+        )
+        this.setSchemaType(nullableSchema, "nullable")
+        return nullableSchema
+    }
+
+    public override nullish(): TupleSchema<Input, Output | null | undefined> {
+        const nullishSchema = new TupleSchema<Input, Output | null | undefined>(
+            this.tupleShape
+        )
+        this.setSchemaType(nullishSchema, "nullish")
+        return nullishSchema
+    }
+
     public override get schemaDetail(): SchemaInformation<
-        Name,
+        WITH_MARK<"TUPLE">,
         Array<SchemaInformation<string, unknown>>
     > {
         return {
-            type: this.name,
-            shape: this._tupleShape.map((schema) => schema.schemaDetail),
+            type: this.nameDetail,
+            shape: this.tupleShape.map((schema) => schema.schemaDetail),
         }
     }
-    public override parse(target: unknown): Infer<Schema<Name, Input, Output>> {
-        if (this.internalValidator(target, this.$errorStack)) {
-            const parsed: unknown[] = []
-            for (let i = 0; i < this._tupleShape.length; i++) {
-                const schema = this._tupleShape[i]
-                parsed.push(schema?.parse((target as unknown[])[i]))
-            }
-            return parsed as Infer<Schema<Name, Input, Output>>
-        }
-
-        throw new MetalError({
-            code: "VALIDATION",
-            expectedType: this.name,
-            manager: this.$errorStack,
-        })
-    }
-
-    public optional = (): TupleSchema<
-        "TUPLE | UNDEFINED",
-        Input,
-        Input | undefined
-    > =>
-        this.createOptional<
-            TupleSchema<"TUPLE | UNDEFINED", Input, Input | undefined>
-        >(
-            (validator) =>
-                new TupleSchema<"TUPLE | UNDEFINED", Input, Input | undefined>(
-                    "TUPLE | UNDEFINED",
-                    this._tupleShape,
-                    validator
-                )
-        )
-
-    public nullish = (): TupleSchema<
-        "TUPLE | NULL | UNDEFINED",
-        Input,
-        Input | null | undefined
-    > =>
-        this.createNullish<
-            TupleSchema<
-                "TUPLE | NULL | UNDEFINED",
-                Input,
-                Input | null | undefined
-            >
-        >(
-            (validator) =>
-                new TupleSchema<
-                    "TUPLE | NULL | UNDEFINED",
-                    Input,
-                    Input | null | undefined
-                >("TUPLE | NULL | UNDEFINED", this._tupleShape, validator)
-        )
-
-    public nullable = (): TupleSchema<"TUPLE | NULL", Input, Input | null> =>
-        this.createNullable<TupleSchema<"TUPLE | NULL", Input, Input | null>>(
-            (validator) =>
-                new TupleSchema<"TUPLE | NULL", Input, Input | null>(
-                    "TUPLE | NULL",
-                    this._tupleShape,
-                    validator
-                )
-        )
 }
