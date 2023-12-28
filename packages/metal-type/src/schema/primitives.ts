@@ -1,84 +1,14 @@
 import { MetalError } from "../error"
-import type { PRIMITIVES_UNIT_NAMES } from "../interface/type"
-import { type AbstractSchema, Schema, type ValidationUnit } from "./schema"
+import type { PRIMITIVE_SCHEMA_NAMES } from "../interface/schema.names"
+import { Schema, type ValidationUnit } from "./schema"
 
 export class PrimitiveSchema<
-        Name extends PRIMITIVES_UNIT_NAMES,
-        Input,
-        Output = Input,
-    >
-    extends Schema<Name, Input, Output>
-    implements AbstractSchema
-{
+    Name extends PRIMITIVE_SCHEMA_NAMES,
+    Input,
+    Output = Input,
+> extends Schema<Name, Input, Output> {
     constructor(name: Name, internalValidator: ValidationUnit<unknown>) {
         super(name, internalValidator)
-    }
-
-    public optional(): PrimitiveSchema<Name, Input, Output | undefined> {
-        const optionalSchemaValidator: ValidationUnit<unknown> = (
-            target,
-            e
-        ) => {
-            const isUndefined = typeof target === "undefined"
-            if (isUndefined === false) {
-                e.push({
-                    error_type: "undefined_error",
-                    message: MetalError.formatTypeError(this.type, target),
-                })
-            }
-            const baseTest = this.internalValidator(target, e)
-            return isUndefined || baseTest
-        }
-
-        return new PrimitiveSchema<Name, Input, Output | undefined>(
-            `${this.name} | UNDEFINED` as Name,
-            optionalSchemaValidator
-        )
-    }
-
-    public nullable(): PrimitiveSchema<Name, Input, Output | null> {
-        const nullableSchemaValidator: ValidationUnit<unknown> = (
-            target,
-            e
-        ) => {
-            const isNull = target === null
-            if (isNull === false) {
-                e.push({
-                    error_type: "null_error",
-                    message: MetalError.formatTypeError(this.type, target),
-                })
-            }
-            const baseTest = this.internalValidator(target, e)
-            return isNull || baseTest
-        }
-
-        return new PrimitiveSchema<Name, Input, Output | null>(
-            `${this.name} | NULL` as Name,
-            nullableSchemaValidator
-        )
-    }
-
-    public nullish(): PrimitiveSchema<Name, Input, Output | null | undefined> {
-        const nullishSchemaValidator: ValidationUnit<unknown> = (target, e) => {
-            const isNullish = target === null || typeof target === "undefined"
-            if (isNullish === false) {
-                e.push({
-                    error_type: "nullish_error",
-                    message: MetalError.formatTypeError(this.type, target),
-                })
-            }
-            const baseTest = this.internalValidator(target, e)
-            return isNullish || baseTest
-        }
-
-        return new PrimitiveSchema<Name, Input, Output | null | undefined>(
-            `${this.name} | NULL | UNDEFINED` as Name,
-            nullishSchemaValidator
-        )
-    }
-
-    public get shape(): string {
-        return this.type
     }
 }
 
@@ -95,7 +25,7 @@ const literal = <const Literal extends string | number | boolean>(
                     message: MetalError.formatTypeError(
                         "literal",
                         target,
-                        `Input must be ${String(literal)}`
+                        `input ${target} must be ${String(literal)}`
                     ),
                 })
             }
@@ -104,7 +34,7 @@ const literal = <const Literal extends string | number | boolean>(
     )
 
 const createPrimitives =
-    <Name extends PRIMITIVES_UNIT_NAMES, Input, Output = Input>(
+    <Name extends PRIMITIVE_SCHEMA_NAMES, Input, Output = Input>(
         name: Name,
         internalValidator: ValidationUnit<unknown>
     ) =>
@@ -118,7 +48,11 @@ const string = createPrimitives<"STRING", string, string>(
         if (!isString) {
             e.push({
                 error_type: "string_error",
-                message: MetalError.formatTypeError("string", target),
+                message: MetalError.formatTypeError(
+                    "string",
+                    target,
+                    `${target} is ${typeof target}`
+                ),
             })
         }
         return isString
@@ -132,7 +66,11 @@ const number = createPrimitives<"NUMBER", number, number>(
         if (!isNumber) {
             e.push({
                 error_type: "number_error",
-                message: MetalError.formatTypeError("number", target),
+                message: MetalError.formatTypeError(
+                    "number",
+                    target,
+                    `${target} is ${typeof target}`
+                ),
             })
         }
         return isNumber
@@ -144,7 +82,11 @@ const date = createPrimitives<"DATE", Date, Date>("DATE", (target, e) => {
     if (!isDate) {
         e.push({
             error_type: "date_error",
-            message: MetalError.formatTypeError("date", target),
+            message: MetalError.formatTypeError(
+                "date",
+                target,
+                `${target} is ${typeof target}`
+            ),
         })
     }
     return isDate
@@ -157,7 +99,11 @@ const bigint = createPrimitives<"BIGINT", bigint, bigint>(
         if (!isBigInt) {
             e.push({
                 error_type: "bigint_error",
-                message: MetalError.formatTypeError("bigint", target),
+                message: MetalError.formatTypeError(
+                    "bigint",
+                    target,
+                    `${target} is ${typeof target}`
+                ),
             })
         }
         return isBigInt
@@ -171,7 +117,11 @@ const boolean = createPrimitives<"BOOLEAN", boolean, boolean>(
         if (!isBoolean) {
             e.push({
                 error_type: "boolean_error",
-                message: MetalError.formatTypeError("boolean", target),
+                message: MetalError.formatTypeError(
+                    "boolean",
+                    target,
+                    `${target} is ${typeof target}`
+                ),
             })
         }
         return isBoolean
@@ -184,7 +134,11 @@ const symbol: () => PrimitiveSchema<"SYMBOL", symbol, symbol> =
         if (!isSymbol) {
             e.push({
                 error_type: "symbol_error",
-                message: MetalError.formatTypeError("symbol", target),
+                message: MetalError.formatTypeError(
+                    "symbol",
+                    target,
+                    `${target} is ${typeof target}`
+                ),
             })
         }
         return isSymbol
@@ -197,7 +151,11 @@ const _undefined = createPrimitives<"UNDEFINED", undefined, undefined>(
         if (!isUndefined) {
             e.push({
                 error_type: "undefined_error",
-                message: MetalError.formatTypeError("undefined", target),
+                message: MetalError.formatTypeError(
+                    "undefined",
+                    target,
+                    `${target} is ${typeof target}`
+                ),
             })
         }
         return isUndefined
@@ -209,7 +167,11 @@ const _null = createPrimitives<"NULL", null, null>("NULL", (target, e) => {
     if (!isNull) {
         e.push({
             error_type: "null_error",
-            message: MetalError.formatTypeError("null", target),
+            message: MetalError.formatTypeError(
+                "null",
+                target,
+                `${target} is ${typeof target}`
+            ),
         })
     }
     return isNull
@@ -223,10 +185,14 @@ const unknown = createPrimitives<"UNKNOWN", unknown, unknown>(
     () => true
 )
 
-const never = createPrimitives<"NEVER", never, never>("NEVER", (_target, e) => {
+const never = createPrimitives<"NEVER", never, never>("NEVER", (target, e) => {
     e.push({
         error_type: "never_error",
-        message: MetalError.formatTypeError("never", _target),
+        message: MetalError.formatTypeError(
+            "never",
+            target,
+            `${target} is ${typeof target}`
+        ),
     })
     return false
 })
