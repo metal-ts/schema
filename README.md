@@ -10,9 +10,9 @@
 
 1. Declarative api inspired by `zod`
 2. First class type-safety
-3. Handsome error trackings
+3. Error trackings and messages
 4. Fast to use - upto 5x faster than `zod`
-5. Small - 6.6kb
+5. Small bundle size - 6.5kb
 
 ## In a nutshell
 
@@ -132,7 +132,7 @@ type People = Infer<typeof People>
 ## Installation
 
 ```bash
-npm install metal-type
+npm install @metal-box/type
 ```
 
 ## Documentation
