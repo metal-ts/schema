@@ -1,6 +1,6 @@
 {
     "name": "@metal-box/type",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Write typesafe schema with metal confidence",
     "author": "danpacho",
     "license": "MIT",
