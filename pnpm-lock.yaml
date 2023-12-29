@@ -17,6 +17,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^6.16.0
         version: 6.16.0(eslint@8.56.0)(typescript@5.3.3)
+      '@vitest/coverage-v8':
+        specifier: ^1.1.0
+        version: 1.1.0(vitest@1.1.0)
       chalk:
         specifier: ^5.3.0
         version: 5.3.0
@@ -74,6 +77,9 @@ importers:
       '@badrap/valita':
         specifier: 0.2.10
         version: 0.2.10
+      '@metal-box/type':
+        specifier: workspace:^
+        version: link:../packages/metal-type
       '@mojotech/json-type-validation':
         specifier: 3.1.0
         version: 3.1.0
@@ -137,9 +143,6 @@ importers:
       json-decoder:
         specifier: 1.4.1
         version: 1.4.1
-      metal-type:
-        specifier: workspace:^
-        version: link:../packages/metal-type
       mol_data_all:
         specifier: 1.1.830
         version: 1.1.830
@@ -2958,6 +2961,29 @@ packages:
 
   /@ungap/structured-clone@1.2.0:
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
+    dev: true
+
+  /@vitest/coverage-v8@1.1.0(vitest@1.1.0):
+    resolution: {integrity: sha512-kHQRk70vTdXAyQY2C0vKOHPyQD/R6IUzcGdO4vCuyr4alE5Yg1+Sk2jSdjlIrTTXdcNEs+ReWVM09mmSFJpzyQ==}
+    peerDependencies:
+      vitest: ^1.0.0
+    dependencies:
+      '@ampproject/remapping': 2.2.1
+      '@bcoe/v8-coverage': 0.2.3
+      debug: 4.3.4
+      istanbul-lib-coverage: 3.2.2
+      istanbul-lib-report: 3.0.1
+      istanbul-lib-source-maps: 4.0.1
+      istanbul-reports: 3.1.6
+      magic-string: 0.30.5
+      magicast: 0.3.2
+      picocolors: 1.0.0
+      std-env: 3.7.0
+      test-exclude: 6.0.0
+      v8-to-istanbul: 9.2.0
+      vitest: 1.1.0
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /@vitest/expect@1.1.0:
@@ -6560,6 +6586,14 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
+    dev: true
+
+  /magicast@0.3.2:
+    resolution: {integrity: sha512-Fjwkl6a0syt9TFN0JSYpOybxiMCkYNEeOTnOTNRbjphirLakznZXAqrXgj/7GG3D1dvETONNwrBfinvAbpunDg==}
+    dependencies:
+      '@babel/parser': 7.23.6
+      '@babel/types': 7.23.6
+      source-map-js: 1.0.2
     dev: true
 
   /make-dir@2.1.0:
