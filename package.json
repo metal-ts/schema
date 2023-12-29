@@ -30,7 +30,10 @@
         "eslint:fix": "eslint --fix '{packages,js}**/*.{ts,js}'",
         "release": "pnpm build && changeset publish",
         "pre-commit": "lint-staged",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "changeset": "changeset",
+        "packages:publish": "changeset publish",
+        "packages:version": "changeset version"
     },
     "devDependencies": {
         "@changesets/cli": "^2.27.1",
