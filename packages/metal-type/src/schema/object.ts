@@ -164,7 +164,9 @@ export class ObjectSchema<
         return this
     }
 
-    public override parse(target: unknown) {
+    public override parse(
+        target: unknown
+    ): Infer<Schema<"OBJECT", Input, Output>> {
         if (this.shouldFilterKeys) {
             const targetObj = target as Record<string, unknown>
             const filtered: Record<string, unknown> = {}
