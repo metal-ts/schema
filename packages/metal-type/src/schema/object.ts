@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetalError } from "../error"
 import type { SchemaErrorStack } from "../error/schema.error.stack"
-import type { Infer, RemoveOptionalMark, WITH_MARK } from "../interface"
+import type {
+    GetOptionalObject,
+    Infer,
+    Prettify,
+    RemoveOptionalMark,
+    WITH_MARK,
+} from "../interface"
 import { logSchema, prettyPrint } from "../utils"
 import { type PrimitiveSchema, literal } from "./primitives"
 import {
@@ -12,21 +18,21 @@ import {
 } from "./schema"
 import { UnionSchema } from "./union"
 
-export type ObjectSchemaRecord = Record<string, SchemaShape>
-type ToPartial<T extends ObjectSchemaRecord> = {
-    [K in keyof T]: T[K] extends Schema<infer Name, infer Input, infer Output>
-        ? Schema<Name, Input | undefined, Output | undefined>
-        : never
+export type ObjectSchemaRecord = {
+    [key: string]: SchemaShape | undefined
 }
+type ToPartial<T extends ObjectSchemaRecord> = Partial<GetOptionalObject<T>>
+
 type ToDeepPartial<T extends ObjectSchemaRecord> = {
-    [K in keyof T]: T[K] extends Schema<infer Name, infer Input, infer Output>
-        ? Input extends ObjectSchemaRecord
-            ? ToDeepPartial<Input> | undefined
-            : Schema<Name, Input | undefined, Output | undefined>
-        : never
+    [Key in keyof T]?: T[Key] extends ObjectSchema<any, infer Output>
+        ? Output extends ObjectSchemaRecord
+            ? Prettify<ToDeepPartial<GetOptionalObject<Output>>>
+            : never
+        : Infer<T[Key]>
 }
 
 type ObjectSchemaType = ObjectSchema<any, any>
+
 export class ObjectSchema<
     Input extends ObjectSchemaRecord,
     Output = Input,
@@ -40,7 +46,7 @@ export class ObjectSchema<
             const extraKeys: string[] = []
             for (const key in target) {
                 // TODO: why array includes is faster than set has?
-                if (this.schemaKeys.includes(key)) continue
+                if (this.schemaKeysSet.has(key)) continue
                 isExtraKeyExists = true
                 extraKeys.push(key)
             }
@@ -57,7 +63,9 @@ export class ObjectSchema<
                     expected_type: this.schemaDetail,
                     message: `extra key ${prettyPrint(
                         extraKeys
-                    )} is included at ${logSchema(this.schemaDetail)}`,
+                    )} is included at ${logSchema(this.schemaDetail)}\nkeys should be one of ${prettyPrint(
+                        this.schemaKeys
+                    )}`,
                 })
                 return false
             }
@@ -184,37 +192,41 @@ export class ObjectSchema<
         return new ObjectSchema<Input, Output>(this._objectShape)
     }
 
-    private removeOptionalAtShape = (
+    private removeOptionalAtShape(
         shape: ObjectSchemaRecord
-    ): ObjectSchemaRecord => {
+    ): ObjectSchemaRecord {
         const newShape: ObjectSchemaRecord = Object.entries(
             shape
         ).reduce<ObjectSchemaRecord>((newSchema, [key, schemaValue]) => {
             if (key.endsWith("?")) {
                 const optionalRemovedKey = key.slice(0, -1)
-                if (schemaValue.isOptional && schemaValue.isNullable) {
+                if (schemaValue?.isOptional && schemaValue.isNullable) {
                     // optional & nullable
                     return newSchema
-                } else if (schemaValue.isNullable && !schemaValue.isOptional) {
+                } else if (schemaValue?.isNullable && !schemaValue.isOptional) {
                     // nullable only
                     newSchema[optionalRemovedKey] = schemaValue.nullish()
                     return newSchema
-                } else if (!schemaValue.isNullable && schemaValue.isOptional) {
+                } else if (
+                    !schemaValue?.isNullable &&
+                    schemaValue?.isOptional
+                ) {
                     // optional only -> skip
                     return newSchema
                 }
-                newSchema[optionalRemovedKey] = schemaValue.optional()
+                newSchema[optionalRemovedKey] = schemaValue?.optional()
                 return newSchema
             }
+
             newSchema[key] = schemaValue
             return newSchema
         }, {})
         return newShape
     }
 
-    public override injectErrorStack = (errorStack: SchemaErrorStack): void => {
+    public override injectErrorStack(errorStack: SchemaErrorStack): void {
         Object.entries(this._objectShape).forEach(([, originalSchema]) => {
-            originalSchema.injectErrorStack(errorStack)
+            originalSchema?.injectErrorStack(errorStack)
             super.injectErrorStack(errorStack)
         })
     }
@@ -237,7 +249,7 @@ export class ObjectSchema<
     public override get shape(): Input {
         return Object.entries(this._objectShape).reduce<ObjectSchemaRecord>(
             (acc, [key, value]) => {
-                acc[key] = value.clone()
+                acc[key] = value?.clone()
                 return acc
             },
             {}
@@ -255,7 +267,8 @@ export class ObjectSchema<
             shape: Object.entries(this._objectShape).reduce<
                 Record<string, SchemaInformation<string, unknown>>
             >((newSchema, [key, value]) => {
-                newSchema[key] = value.schemaDetail
+                if (!value) return newSchema
+                newSchema[key] = value?.schemaDetail
                 return newSchema
             }, {}),
         }
@@ -374,7 +387,7 @@ export class ObjectSchema<
         const partialSchema = Object.entries(
             this._objectShape
         ).reduce<ObjectSchemaRecord>((newSchema, [key, value]) => {
-            const optional = value.optional()
+            const optional = value?.optional()
             newSchema[key] = optional
             return newSchema
         }, {}) as ToPartial<Input>
@@ -394,7 +407,7 @@ export class ObjectSchema<
                 newSchema[key] = optionalDeepPartialSchema
                 return newSchema
             }
-            newSchema[key] = value.optional()
+            newSchema[key] = value?.optional()
             return newSchema
         }, {}) as ToDeepPartial<Input>
 
