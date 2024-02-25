@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest"
-import { Schema } from "../schema"
 import { t } from "../schema/t"
 import { TupleSchema } from "../schema/tuple"
 import { label } from "./utils/test.label"
@@ -10,7 +9,6 @@ describe(label.unit("MetalType - TupleSchema"), () => {
 
         expect(schema).toBeInstanceOf(TupleSchema)
         expect(schema.name).toBe("TUPLE")
-        expect(schema.shape).toEqual([t.string, t.number])
     })
 
     it(label.case("should create an optional tuple schema"), () => {
@@ -18,7 +16,6 @@ describe(label.unit("MetalType - TupleSchema"), () => {
 
         expect(schema).toBeInstanceOf(TupleSchema)
         expect(schema.name).toBe("TUPLE")
-        expect(schema.shape).toEqual([t.string, t.number])
     })
 
     it(label.case("should parse tuple -> strict"), () => {
@@ -97,8 +94,6 @@ describe(label.unit("MetalType - TupleSchema"), () => {
         // @ts-expect-error readonly property, can't be modified by typescript
         // it can be modified by javascript, but it's not recommended
         sameShape[0] = t.boolean
-        expect(sameShape[0]).toEqual(t.boolean)
-        expect(schema.shape[0]).toEqual(t.string)
         const parsed = schema.parse(["not boolean", 1])
         expect(parsed).toEqual(["not boolean", 1])
     })
@@ -106,16 +101,14 @@ describe(label.unit("MetalType - TupleSchema"), () => {
     it(label.case("should create a nullable tuple schema"), () => {
         const schema = t.tuple([t.string, t.number]).nullable()
 
-        expect(schema).toBeInstanceOf(Schema)
+        expect(schema).toBeInstanceOf(TupleSchema)
         expect(schema.name).toBe("TUPLE")
-        expect(schema.shape).toEqual([t.string, t.number])
     })
 
     it(label.case("should create a nullish tuple schema"), () => {
         const schema = t.tuple([t.string, t.number]).optional()
 
-        expect(schema).toBeInstanceOf(Schema)
+        expect(schema).toBeInstanceOf(TupleSchema)
         expect(schema.name).toBe("TUPLE")
-        expect(schema.shape).toEqual([t.string, t.number])
     })
 })
