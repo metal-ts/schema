@@ -1,28 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { MetalError } from "../error"
-import type { SchemaErrorStack } from "../error/schema.error.stack"
-import type { WITH_MARK } from "../interface"
-import { logSchema } from "../utils"
+import { MetalError } from '../error'
+import type { SchemaErrorStack } from '../error/schema.error.stack'
+import type { WITH_MARK } from '../interface'
+import { logSchema } from '../utils'
 import {
     Schema,
     type SchemaInformation,
     type SchemaShape,
     type ValidationUnit,
-} from "./schema"
+} from './schema'
 
 export class TupleSchema<
     const Input extends readonly SchemaShape[],
     const Output = Input,
-> extends Schema<"TUPLE", Input, Output> {
+> extends Schema<'TUPLE', Input, Output> {
     constructor(private readonly tupleShape: Input) {
         const tupleValidator: ValidationUnit<unknown> = (target, e) => {
             if (!Array.isArray(target)) {
                 e.push({
-                    error_type: "tuple_error",
+                    error_type: 'tuple_error',
                     message: MetalError.formatTypeError(
                         this.type,
                         target,
-                        "Tuple must be an array"
+                        'Tuple must be an array'
                     ),
                 })
                 return false
@@ -33,7 +33,7 @@ export class TupleSchema<
 
             if (tupleSchemaLength !== targetLength) {
                 e.push({
-                    error_type: "tuple_error",
+                    error_type: 'tuple_error',
                     message: MetalError.formatTypeError(
                         this.type,
                         target,
@@ -49,7 +49,7 @@ export class TupleSchema<
 
                 if (!schema || !schema.is(item)) {
                     e.push({
-                        error_type: "tuple_error",
+                        error_type: 'tuple_error',
                         message: MetalError.formatTypeError(
                             logSchema(this.schemaDetail),
                             target,
@@ -66,7 +66,7 @@ export class TupleSchema<
             return true
         }
 
-        super("TUPLE", tupleValidator)
+        super('TUPLE', tupleValidator)
         this.injectErrorStack(this.$errorStack)
     }
 
@@ -88,7 +88,7 @@ export class TupleSchema<
         const optionalSchema = new TupleSchema<Input, Output | undefined>(
             this.tupleShape
         )
-        this.setSchemaType(optionalSchema, "optional")
+        this.setSchemaType(optionalSchema, 'optional')
         return optionalSchema
     }
 
@@ -96,7 +96,7 @@ export class TupleSchema<
         const nullableSchema = new TupleSchema<Input, Output | null>(
             this.tupleShape
         )
-        this.setSchemaType(nullableSchema, "nullable")
+        this.setSchemaType(nullableSchema, 'nullable')
         return nullableSchema
     }
 
@@ -104,12 +104,12 @@ export class TupleSchema<
         const nullishSchema = new TupleSchema<Input, Output | null | undefined>(
             this.tupleShape
         )
-        this.setSchemaType(nullishSchema, "nullish")
+        this.setSchemaType(nullishSchema, 'nullish')
         return nullishSchema
     }
 
     public override get schemaDetail(): SchemaInformation<
-        WITH_MARK<"TUPLE">,
+        WITH_MARK<'TUPLE'>,
         Array<SchemaInformation<string, unknown>>
     > {
         return {

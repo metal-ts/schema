@@ -22,7 +22,7 @@ class Schema {
 
             if (!isAnd) {
                 error.push({
-                    error_type: "intersection_error",
+                    error_type: 'intersection_error',
                     message: MetalError.formatTypeError(
                         `${this.type} & ${schema.type}`,
                         target
@@ -39,9 +39,9 @@ class Schema {
 3. recursive schema
 
 ```ts
-import { MetalError } from "../error"
-import { Infer } from "../metal-type"
-import { Schema, SchemaShape, ValidationUnit } from "./schema"
+import { MetalError } from '../error'
+import { Infer } from '../metal-type'
+import { Schema, SchemaShape, ValidationUnit } from './schema'
 
 type RecursiveGenerator<ThisArgs, ThisType> = {
     [key in keyof ThisType & keyof ThisArgs]: ThisType &
@@ -52,7 +52,7 @@ export class Recursive<
     ThisArgs extends SchemaShape,
     ThisSchema extends SchemaShape,
 > extends Schema<
-    "RECURSIVE",
+    'RECURSIVE',
     RecursiveGenerator<Infer<ThisArgs>, Infer<ThisSchema>>
 > {
     public constructor(
@@ -62,13 +62,13 @@ export class Recursive<
     ) {
         const thisSchema: ThisSchema = thisT(base)
         const recursiveValidator: ValidationUnit<unknown> = (target, e) => {
-            if (typeof target !== "object" || target === null) {
+            if (typeof target !== 'object' || target === null) {
                 e.push({
-                    error_type: "recursive_error",
+                    error_type: 'recursive_error',
                     message: MetalError.formatTypeError(
                         this.type,
                         target,
-                        "Recursive must be an object"
+                        'Recursive must be an object'
                     ),
                 })
                 return false
@@ -84,7 +84,7 @@ export class Recursive<
 
             return recursiveValidationResult
         }
-        super("RECURSIVE", recursiveValidator)
+        super('RECURSIVE', recursiveValidator)
     }
 }
 

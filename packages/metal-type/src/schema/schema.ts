@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { type MetalCause, MetalError } from "../error"
-import { SchemaErrorStack } from "../error/schema.error.stack"
-import type { Infer, SchemaNames, WITH_MARK } from "../interface"
-import { prettyPrint } from "../utils"
+import { type MetalCause, MetalError } from '../error'
+import { SchemaErrorStack } from '../error/schema.error.stack'
+import type { Infer, SchemaNames, WITH_MARK } from '../interface'
+import { prettyPrint } from '../utils'
 
 /**
  * @description Schema logging information
@@ -164,21 +164,21 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
             this._label,
             this.transformer
         )
-        this.setSchemaType(schema, "optional")
+        this.setSchemaType(schema, 'optional')
         return schema
     }
     protected setSchemaType<Schema extends SchemaShape>(
         target: Schema,
-        type: "optional" | "nullish" | "nullable"
+        type: 'optional' | 'nullish' | 'nullable'
     ): void {
         switch (type) {
-            case "optional":
+            case 'optional':
                 target.isOptional = true
                 break
-            case "nullable":
+            case 'nullable':
                 target.isNullable = true
                 break
-            case "nullish":
+            case 'nullish':
                 target.isNullable = true
                 target.isOptional = true
                 break
@@ -194,7 +194,7 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
             this._label,
             this.transformer
         )
-        this.setSchemaType(schema, "nullable")
+        this.setSchemaType(schema, 'nullable')
         return schema
     }
     public nullish(): Schema<Name, Input, Output | null | undefined> {
@@ -204,7 +204,7 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
             this._label,
             this.transformer
         )
-        this.setSchemaType(schema, "nullish")
+        this.setSchemaType(schema, 'nullish')
         return schema
     }
 
@@ -252,7 +252,7 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
 
         if (!isPassingPipe) {
             const pipeError = new MetalError({
-                code: "VALIDATION",
+                code: 'VALIDATION',
                 expectedType: this._name,
                 stack: this.$errorStack,
             })
@@ -282,7 +282,7 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
 
         if (!this.internalValidator(target, this.$errorStack)) {
             throw new MetalError({
-                code: "VALIDATION",
+                code: 'VALIDATION',
                 expectedType: this._name,
                 stack: this.$errorStack,
             })
@@ -353,7 +353,7 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
             if (e instanceof MetalError) throw e
 
             throw new MetalError({
-                code: "TRANSFORMATION",
+                code: 'TRANSFORMATION',
                 expectedType: this._name,
                 stack: this.$errorStack,
             })
@@ -440,8 +440,8 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
                 error: `Metal-type unknown error occurred.\n${prettyPrint(e)}`,
                 cause: [
                     {
-                        message: "unknown error occurred",
-                        error_type: "unknown_error",
+                        message: 'unknown error occurred',
+                        error_type: 'unknown_error',
                         error_info: e,
                     },
                 ],
@@ -470,11 +470,11 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
         if (this.is(input)) return
 
         this.$errorStack.push({
-            error_type: "assertion_error",
+            error_type: 'assertion_error',
             message: MetalError.formatTypeError(this._name, input),
         })
         throw new MetalError({
-            code: "VALIDATION",
+            code: 'VALIDATION',
             expectedType: this._name,
             stack: this.$errorStack,
         })

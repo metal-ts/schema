@@ -1,1 +1,1 @@
-export * from "./metal.error"
+export * from './metal.error'

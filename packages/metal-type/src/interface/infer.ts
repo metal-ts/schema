@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Schema } from "../schema"
-import type { PRIMITIVE_SCHEMA_NAMES } from "./schema.names"
-import type { Prettify } from "./util"
+import type { Schema } from '../schema'
+import type { PRIMITIVE_SCHEMA_NAMES } from './schema.names'
+import type { Prettify } from './util'
 
 /**
  * @description get optional field from record
@@ -54,15 +54,15 @@ export type Infer<T> =
     T extends Schema<infer Name, any, infer Output>
         ? Name extends PRIMITIVE_SCHEMA_NAMES
             ? Output
-            : Name extends "ARRAY"
+            : Name extends 'ARRAY'
               ? Output extends Array<infer ArrayElement>
                   ? Array<Infer<ArrayElement>>
                   : Infer<Output>
-              : Name extends "TUPLE"
+              : Name extends 'TUPLE'
                 ? Output extends readonly [infer First, ...infer Rest]
                     ? readonly [Infer<First>, ...Infer<Rest>]
                     : Infer<Output>
-                : Name extends "OBJECT"
+                : Name extends 'OBJECT'
                   ? Prettify<
                         GetOptionalObject<{
                             [Key in keyof Output]: Infer<Output[Key]>

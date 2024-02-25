@@ -1,11 +1,11 @@
-import { type TypeEqual, expectType } from "ts-expect"
-import { describe, it } from "vitest"
-import { type Infer, t } from "../index"
-import { label } from "./utils/test.label"
+import { type TypeEqual, expectType } from 'ts-expect'
+import { describe, it } from 'vitest'
+import { type Infer, t } from '../index'
+import { label } from './utils/test.label'
 
-describe(label.unit("MetalType - Infer"), () => {
+describe(label.unit('MetalType - Infer'), () => {
     it(
-        label.case("should infer object | partial object | deepPartial object"),
+        label.case('should infer object | partial object | deepPartial object'),
         () => {
             const ObjectSchema = t.object({
                 hello: t.string,
@@ -14,10 +14,10 @@ describe(label.unit("MetalType - Infer"), () => {
                     deeply: t.boolean,
                     union: t.union(t.string, t.number.array),
                     tuple: t.tuple([t.string, t.number]),
-                    "depth2?": t.union(
+                    'depth2?': t.union(
                         t
                             .object({
-                                "hello?": t.array(
+                                'hello?': t.array(
                                     t.union(
                                         t.string,
                                         t.object({
@@ -97,7 +97,7 @@ describe(label.unit("MetalType - Infer"), () => {
         }
     )
 
-    it(label.case("should infer transformed object"), () => {
+    it(label.case('should infer transformed object'), () => {
         const objectSchema = t.object({
             hello: t.string,
             world: t.number,
@@ -105,12 +105,12 @@ describe(label.unit("MetalType - Infer"), () => {
                 deeply: t.boolean,
                 union: t.union(t.string, t.number),
                 tuple: t.tuple([t.string, t.number]),
-                "depth2?": t.union(
+                'depth2?': t.union(
                     t.object({ hello: t.string }).nullish(),
                     t.number,
                     t.array(t.string)
                 ),
-                "b?": t.array(
+                'b?': t.array(
                     t.array(
                         t.array(
                             t
@@ -151,12 +151,12 @@ describe(label.unit("MetalType - Infer"), () => {
             }
         }
         const parsed = objectSchema.parse({
-            hello: "",
+            hello: '',
             world: 1,
             nested: {
                 deeply: false,
-                union: "",
-                tuple: ["", 1],
+                union: '',
+                tuple: ['', 1],
                 depth2: 1,
                 b: [[[]]],
             },
@@ -165,7 +165,7 @@ describe(label.unit("MetalType - Infer"), () => {
         expectType<TypeEqual<ObjectSchema, Expected>>(true)
     })
 
-    it(label.case("should infer deeply nested combination"), () => {
+    it(label.case('should infer deeply nested combination'), () => {
         const arraySchema = t
             .array(
                 t.array(
@@ -179,7 +179,7 @@ describe(label.unit("MetalType - Infer"), () => {
                                     t.string
                                 )
                             ),
-                            "c?": t.tuple([
+                            'c?': t.tuple([
                                 t.string,
                                 t.number,
                                 t.object({
@@ -225,7 +225,7 @@ describe(label.unit("MetalType - Infer"), () => {
                                             })
                                         )
                                     ),
-                                    name: t.literal("Name"),
+                                    name: t.literal('Name'),
                                 }),
                             ]),
                         })
@@ -234,8 +234,8 @@ describe(label.unit("MetalType - Infer"), () => {
             )
             .nullish()
             .transform((e) => ({
-                a: "",
-                b: "".split(" "),
+                a: '',
+                b: ''.split(' '),
                 es: e?.map((e) => e),
             }))
         type ArraySchema = Infer<typeof arraySchema>
@@ -279,7 +279,7 @@ describe(label.unit("MetalType - Infer"), () => {
                                             ],
                                         ]
                                     }
-                              name: "Name"
+                              name: 'Name'
                           },
                       ]
                   }[][][]
@@ -290,12 +290,12 @@ describe(label.unit("MetalType - Infer"), () => {
         expectType<TypeEqual<ArraySchema, Expected>>(true)
     })
 
-    it(label.case("should infer optional | nullish | nullable object"), () => {
+    it(label.case('should infer optional | nullish | nullable object'), () => {
         const objectNullable = t
             .object({
-                "a?": t.string.nullish(),
-                "b?": t.string.nullable(),
-                "c?": t.string.optional(),
+                'a?': t.string.nullish(),
+                'b?': t.string.nullable(),
+                'c?': t.string.optional(),
             })
             .nullable()
         type Schema = Infer<typeof objectNullable>
@@ -317,21 +317,21 @@ describe(label.unit("MetalType - Infer"), () => {
         objectNullable.parse({ b: undefined })
         objectNullable.parse({ c: undefined })
         objectNullable.parse({ c: null })
-        objectNullable.parse({ a: "", b: "", c: "" })
-        objectNullable.parse({ a: "", b: "" })
-        objectNullable.parse({ a: "", c: "" })
-        objectNullable.parse({ b: "", c: null })
-        objectNullable.parse({ b: "", c: undefined })
+        objectNullable.parse({ a: '', b: '', c: '' })
+        objectNullable.parse({ a: '', b: '' })
+        objectNullable.parse({ a: '', c: '' })
+        objectNullable.parse({ b: '', c: null })
+        objectNullable.parse({ b: '', c: undefined })
     })
 
-    it(label.case("should infer optional | nullish | nullable array"), () => {
+    it(label.case('should infer optional | nullish | nullable array'), () => {
         const arrayOptional = t.array(t.string.optional()).optional()
         type ArrayOptional = Infer<typeof arrayOptional>
         expectType<
             TypeEqual<ArrayOptional, (string | undefined)[] | undefined>
         >(true)
         arrayOptional.parse(undefined)
-        arrayOptional.parse(["", undefined])
+        arrayOptional.parse(['', undefined])
         arrayOptional.parse([undefined, undefined])
 
         const arrayNullish = t.array(t.string.nullish()).nullish()
@@ -344,15 +344,15 @@ describe(label.unit("MetalType - Infer"), () => {
         >(true)
         arrayNullish.parse(null)
         arrayNullish.parse(undefined)
-        arrayNullish.parse(["", null])
-        arrayNullish.parse(["", undefined])
+        arrayNullish.parse(['', null])
+        arrayNullish.parse(['', undefined])
         arrayNullish.parse([null, undefined])
         arrayNullish.parse([undefined, undefined])
         arrayNullish.parse([undefined, null])
         arrayNullish.parse([null, null])
     })
 
-    it(label.case("should infer optional | nullish | nullable tuple"), () => {
+    it(label.case('should infer optional | nullish | nullable tuple'), () => {
         const tupleOptional = t
             .tuple([t.string.optional(), t.number.nullish()])
             .optional()
@@ -365,8 +365,8 @@ describe(label.unit("MetalType - Infer"), () => {
             >
         >(true)
         tupleOptional.parse(undefined)
-        tupleOptional.parse(["", 1])
-        tupleOptional.parse(["", undefined])
+        tupleOptional.parse(['', 1])
+        tupleOptional.parse(['', undefined])
         tupleOptional.parse([undefined, undefined])
         tupleOptional.parse([undefined, 1])
 
@@ -385,15 +385,15 @@ describe(label.unit("MetalType - Infer"), () => {
         >(true)
         tupleNullish.parse(null)
         tupleNullish.parse(undefined)
-        tupleNullish.parse(["", 1])
-        tupleNullish.parse(["", undefined])
+        tupleNullish.parse(['', 1])
+        tupleNullish.parse(['', undefined])
         tupleNullish.parse([null, undefined])
         tupleNullish.parse([undefined, undefined])
         tupleNullish.parse([undefined, 1])
         tupleNullish.parse([null, 1])
         tupleNullish.parse([null, undefined])
     })
-    it(label.case("should infer optional | nullish | nullable union"), () => {
+    it(label.case('should infer optional | nullish | nullable union'), () => {
         const unionNullish = t
             .union(t.string.nullish(), t.number.optional())
             .nullish()
@@ -404,6 +404,6 @@ describe(label.unit("MetalType - Infer"), () => {
         unionNullish.parse(null)
         unionNullish.parse(undefined)
         unionNullish.parse(1)
-        unionNullish.parse("")
+        unionNullish.parse('')
     })
 })

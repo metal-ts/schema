@@ -1,4 +1,4 @@
-export { Schema, transformer, validator } from "./schema"
+export { Schema, transformer, validator } from './schema'
 export {
     any,
     bigint,
@@ -12,18 +12,18 @@ export {
     symbol,
     undefined,
     unknown,
-} from "./primitives"
-export { ArraySchema } from "./array"
-export { TupleSchema } from "./tuple"
-export { UnionSchema } from "./union"
+} from './primitives'
+export { ArraySchema } from './array'
+export { TupleSchema } from './tuple'
+export { UnionSchema } from './union'
 export {
     ObjectSchema,
     type ObjectSchemaRecord,
     type ObjectSchemaShape,
-} from "./object"
+} from './object'
 export type {
     SchemaShape,
     InferSchemaInputOutput,
     ValidationUnit,
     Transformer,
-} from "./schema"
+} from './schema'

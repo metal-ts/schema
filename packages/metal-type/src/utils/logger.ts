@@ -1,7 +1,7 @@
-import type { SchemaInformation } from "../schema/schema"
+import type { SchemaInformation } from '../schema/schema'
 
 const extractType = (name: string): { category: string; detail: string[] } => {
-    const types = name.split("|").map((e) => e.toLowerCase().trim())
+    const types = name.split('|').map((e) => e.toLowerCase().trim())
     const typeCategory = types[0]!.toUpperCase()!
 
     return {
@@ -13,29 +13,29 @@ const formatTypeSchema = (
     schema: SchemaInformation<string, unknown>
 ): string => {
     const { category, detail } = extractType(schema.type)
-    const detailUnion = detail.length !== 0 ? ` | ${detail.join(" | ")}` : ""
+    const detailUnion = detail.length !== 0 ? ` | ${detail.join(' | ')}` : ''
     switch (category) {
-        case "TUPLE": {
+        case 'TUPLE': {
             return `readonly [${(
                 schema.shape as Array<SchemaInformation<string, unknown>>
             )
                 .map(formatTypeSchema)
-                .join(", ")}]${detailUnion}`
+                .join(', ')}]${detailUnion}`
         }
 
-        case "UNION": {
+        case 'UNION': {
             if (!Array.isArray(schema.shape)) {
                 return schema.shape as string
             }
 
-            const union = `${schema.shape.map(formatTypeSchema).join(" | ")}`
+            const union = `${schema.shape.map(formatTypeSchema).join(' | ')}`
 
-            return union.includes(detailUnion.replaceAll("|", "").trim())
+            return union.includes(detailUnion.replaceAll('|', '').trim())
                 ? union
                 : `${union}${detailUnion}`
         }
 
-        case "OBJECT": {
+        case 'OBJECT': {
             const shapes = schema.shape as Record<
                 string,
                 SchemaInformation<string, unknown>
@@ -45,14 +45,14 @@ const formatTypeSchema = (
                     | SchemaInformation<string, unknown>
                     | undefined = shapes[key]
                 if (propertySchema === undefined)
-                    throw new Error("Invalid schema")
+                    throw new Error('Invalid schema')
 
                 return `${key}: ${formatTypeSchema(propertySchema)}`
             })
-            return `{${objectShape.join(", ")}}${detailUnion}`
+            return `{${objectShape.join(', ')}}${detailUnion}`
         }
 
-        case "ARRAY": {
+        case 'ARRAY': {
             return `Array<${formatTypeSchema(
                 schema.shape as SchemaInformation<string, unknown>
             )}>${detailUnion}`
@@ -65,20 +65,20 @@ const formatTypeSchema = (
         // case "SET":
         //     return `Set<${formatTypeSchema(schema.shape.value)}>`
         default: {
-            if (schema.type.includes("LITERAL")) {
+            if (schema.type.includes('LITERAL')) {
                 const extractLiteralType = (schemaType: string): string =>
                     `"${schemaType
-                        .replace("LITERAL", "")
-                        .replace("<", "")
-                        .replace(">", "")}"`
+                        .replace('LITERAL', '')
+                        .replace('<', '')
+                        .replace('>', '')}"`
 
-                if (schema.type.includes("|")) {
+                if (schema.type.includes('|')) {
                     const [literal, ...unions] = schema.type
-                        .split("|")
+                        .split('|')
                         .map((e) => e.trim())
                     const dedupeUnions = [...new Set(unions)]
                     if (literal && unions)
-                        return `${extractLiteralType(literal)} | ${dedupeUnions.map((e) => e.trim().toLowerCase()).join(" | ")}`
+                        return `${extractLiteralType(literal)} | ${dedupeUnions.map((e) => e.trim().toLowerCase()).join(' | ')}`
                 }
 
                 return extractLiteralType(schema.type)
@@ -92,21 +92,21 @@ const formatTypeSchema = (
 const TAB_NUMBER = 3 as const
 
 const formatSchemaString = (schemaString: string, tab: number = TAB_NUMBER) => {
-    const TAB: string = " ".repeat(tab)
-    const ENTER = "\n" as const
-    const SPACE = " " as const
-    const COMMA = "," as const
+    const TAB: string = ' '.repeat(tab)
+    const ENTER = '\n' as const
+    const SPACE = ' ' as const
+    const COMMA = ',' as const
 
     let indentDepth: number = 0
 
     const formattedSchema: string = schemaString
-        .split("")
+        .split('')
         .reduce<string>((schema, char, i) => {
-            if (char === "{" || char === "[") {
+            if (char === '{' || char === '[') {
                 schema += char + ENTER
                 indentDepth++
-                schema += TAB.repeat(indentDepth) + " "
-            } else if (char === "}" || char === "]") {
+                schema += TAB.repeat(indentDepth) + ' '
+            } else if (char === '}' || char === ']') {
                 schema += ENTER
                 indentDepth--
                 schema += TAB.repeat(indentDepth)
@@ -126,13 +126,13 @@ const formatSchemaString = (schemaString: string, tab: number = TAB_NUMBER) => {
                 schema += char
             }
             return schema
-        }, "")
+        }, '')
 
     return formattedSchema.trim()
 }
 
 const enter = (target: string, removeEnter: boolean = false): string =>
-    `${removeEnter ? "" : "\n"}${target}`
+    `${removeEnter ? '' : '\n'}${target}`
 
 type PrintOptions = {
     tab?: number
