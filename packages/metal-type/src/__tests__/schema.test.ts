@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { MetalError } from "../error"
-import { Schema, t, transformer, validator } from "../index"
+import { t, transformer, validator } from "../index"
 import { label } from "./utils/test.label"
 
 const isEmail = validator((target, error) => {
@@ -59,7 +59,7 @@ const toEmailInfo = transformer((target: `${string}@${string}.${string}`) => ({
     length: target.length,
 }))
 
-const Email = new Schema<"EMAIL", string, `${string}@${string}.${string}`>(
+const Email = t.custom<"EMAIL", string, `${string}@${string}.${string}`>(
     "EMAIL",
     isEmail
 )
