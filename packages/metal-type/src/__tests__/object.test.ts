@@ -235,6 +235,56 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
         })
     })
 
+    it(label.case("should parse object -> deep partial"), () => {
+        const DeepPartialSchema = t
+            .object({
+                maxNumber: t.number,
+                string: t.string,
+                longString: t.string,
+                boolean: t.boolean,
+                deeplyNested: t.object({
+                    foo: t.string,
+                    num: t.number,
+                    bool: t.boolean,
+                    nested: t.object({
+                        foo: t.string,
+                        num: t.number,
+                        bool: t.boolean,
+                        nested: t.object({
+                            foo: t.string,
+                            num: t.number,
+                            bool: t.boolean,
+                        }),
+                    }),
+                }),
+            })
+            .deepPartial()
+
+        const validateData = {
+            deeplyNested: {
+                nested: {
+                    nested: {
+                        foo: "bar",
+                        num: 1,
+                        bool: false,
+                    },
+                },
+            },
+        }
+        const validated = DeepPartialSchema.parse(validateData)
+        expect(validated).toStrictEqual({
+            deeplyNested: {
+                nested: {
+                    nested: {
+                        foo: "bar",
+                        num: 1,
+                        bool: false,
+                    },
+                },
+            },
+        })
+    })
+
     it(label.case("should deep clone shape -> zero side effect"), () => {
         const TestSchema = t
             .object({
@@ -254,12 +304,24 @@ describe(label.unit("MetalType - ObjectSchema"), () => {
             })
             .strict()
 
-        const copied = TestSchema.shape
-        // it can be modified by javascript, but it's not recommended
-        // @ts-expect-error readonly property, can't be modified by typescript
-        copied.x = t.number // TestSchema should not be changed
-        expect(TestSchema.shape.x).toEqual(t.string)
-        expect(copied.x).toEqual(t.number)
+        const CopiedSchema = TestSchema.deepPartial()
+
+        const validateData = {
+            x: "test@naver.com",
+            y: 2,
+            value1: {
+                y: 2,
+                z: 10,
+                value2: {
+                    z: "ChangeThat",
+                },
+                t: "a",
+            },
+        }
+
+        expect(() => TestSchema.parse(validateData)).not.toThrowError()
+        const res = CopiedSchema.parse(validateData)
+        expect(res).toStrictEqual(validateData)
     })
 
     it(label.case("should parse object -> deep partial & strict"), () => {
