@@ -44,29 +44,31 @@ type GetRequiredField<Record> = {
         ? never
         : RecordKey]: Record[RecordKey]
 }
-type GetOptionalObject<T> = GetRequiredField<T> & GetOptionalField<T>
+
+export type GetOptionalObject<T> = GetRequiredField<T> & GetOptionalField<T>
 
 /**
  * @description Get type of schema
  */
-export type Infer<T> = T extends Schema<infer Name, any, infer Output>
-    ? Name extends PRIMITIVE_SCHEMA_NAMES
-        ? Output
-        : Name extends "ARRAY"
-          ? Output extends Array<infer ArrayElement>
-              ? Array<Infer<ArrayElement>>
-              : Infer<Output>
-          : Name extends "TUPLE"
-            ? Output extends readonly [infer First, ...infer Rest]
-                ? readonly [Infer<First>, ...Infer<Rest>]
-                : Infer<Output>
-            : Name extends "OBJECT"
-              ? Prettify<
-                    GetOptionalObject<{
-                        [Key in keyof Output]: Infer<Output[Key]>
-                    }>
-                >
-              : Infer<Output>
-    : T extends readonly [infer First, ...infer Rest]
-      ? readonly [Infer<First>, ...Infer<Rest>]
-      : T
+export type Infer<T> =
+    T extends Schema<infer Name, any, infer Output>
+        ? Name extends PRIMITIVE_SCHEMA_NAMES
+            ? Output
+            : Name extends "ARRAY"
+              ? Output extends Array<infer ArrayElement>
+                  ? Array<Infer<ArrayElement>>
+                  : Infer<Output>
+              : Name extends "TUPLE"
+                ? Output extends readonly [infer First, ...infer Rest]
+                    ? readonly [Infer<First>, ...Infer<Rest>]
+                    : Infer<Output>
+                : Name extends "OBJECT"
+                  ? Prettify<
+                        GetOptionalObject<{
+                            [Key in keyof Output]: Infer<Output[Key]>
+                        }>
+                    >
+                  : Infer<Output>
+        : T extends readonly [infer First, ...infer Rest]
+          ? readonly [Infer<First>, ...Infer<Rest>]
+          : T
