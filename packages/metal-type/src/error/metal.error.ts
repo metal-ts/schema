@@ -1,6 +1,6 @@
-import type { SchemaNames } from "../interface/schema.names"
-import { prettyPrint } from "../utils"
-import type { SchemaErrorStack } from "./schema.error.stack"
+import type { SchemaNames } from '../interface/schema.names'
+import { prettyPrint } from '../utils'
+import type { SchemaErrorStack } from './schema.error.stack'
 
 interface BaseCause {
     code: string
@@ -14,7 +14,7 @@ export type MetalCause = BaseCause | CustomCause
 
 export interface ErrorConstructorOption {
     // eslint-disable-next-line @typescript-eslint/ban-types
-    code: "VALIDATION" | "UNSUPPORTED" | "TRANSFORMATION" | (string & {})
+    code: 'VALIDATION' | 'UNSUPPORTED' | 'TRANSFORMATION' | (string & {})
     stack: SchemaErrorStack
     expectedType: SchemaNames
     // eslint-disable-next-line @typescript-eslint/ban-types
@@ -39,7 +39,7 @@ export class MetalError extends Error {
         // base cause
         this.addCause([
             {
-                code: "VALIDATION",
+                code: 'VALIDATION',
                 error_type: code,
                 message: this.errorTitle,
             },
@@ -87,7 +87,7 @@ export class MetalError extends Error {
     private formatCause(cause: BaseCause | CustomCause): string {
         return Object.entries(cause)
             .map(([key, value]) => `${key}: ${prettyPrint(value)}`)
-            .join("\n")
+            .join('\n')
     }
 
     /**
@@ -97,7 +97,7 @@ export class MetalError extends Error {
         if (this._cause === undefined || this._cause.length === 0)
             return this.errorTitle
 
-        return this._cause?.map((cause) => this.formatCause(cause)).join("\n")
+        return this._cause?.map((cause) => this.formatCause(cause)).join('\n')
     }
 
     public static formatTypeError(
@@ -106,11 +106,11 @@ export class MetalError extends Error {
         additionalMessage?: string
     ): string {
         return `\n› Expected: ${type}\n› Received: ${
-            typeof givenValue === "object"
+            typeof givenValue === 'object'
                 ? givenValue === null
                     ? givenValue
                     : prettyPrint(givenValue)
                 : givenValue
-        } ${additionalMessage ? `\n› Check: ${additionalMessage}` : ""}\n`
+        } ${additionalMessage ? `\n› Check: ${additionalMessage}` : ''}\n`
     }
 }

@@ -2,22 +2,22 @@
 type SupportStringWithLiteral = string & {}
 
 type JAVASCRIPT_PRIMITIVES_TYPE_NAMES =
-    | "STRING"
-    | "BOOLEAN"
-    | "NUMBER"
-    | "BIGINT"
-    | "SYMBOL"
-    | "UNDEFINED"
-    | "NULL"
-    | "DATE"
+    | 'STRING'
+    | 'BOOLEAN'
+    | 'NUMBER'
+    | 'BIGINT'
+    | 'SYMBOL'
+    | 'UNDEFINED'
+    | 'NULL'
+    | 'DATE'
 type TYPESCRIPT_PRIMITIVES_TYPE_NAMES =
     | `LITERAL<${string | number | boolean}>`
-    | "ANY"
-    | "NEVER"
-    | "UNKNOWN"
+    | 'ANY'
+    | 'NEVER'
+    | 'UNKNOWN'
 
-type JAVASCRIPT_EXTENDED_TYPE_NAMES = "OBJECT" | "ARRAY" | "MAP" | "SET"
-type TYPESCRIPT_EXTENDED_TYPE_NAMES = "TUPLE" | "UNION"
+type JAVASCRIPT_EXTENDED_TYPE_NAMES = 'OBJECT' | 'ARRAY' | 'MAP' | 'SET'
+type TYPESCRIPT_EXTENDED_TYPE_NAMES = 'TUPLE' | 'UNION'
 
 type WITH_NULLABLE_MARK<T extends string> = `${T} | NULL | UNDEFINED`
 type WITH_OPTIONAL_MARK<T extends string> = `${T} | UNDEFINED`

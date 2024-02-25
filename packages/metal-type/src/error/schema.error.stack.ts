@@ -1,4 +1,4 @@
-import type { CustomCause } from "./metal.error"
+import type { CustomCause } from './metal.error'
 
 export class SchemaErrorStack {
     private _errorStack: Array<CustomCause> = []
@@ -34,12 +34,12 @@ export class SchemaErrorStack {
         const messageLength = this._errorStack.length
         const stackMessages: string = this._errorStack.reduceRight<string>(
             (acc, cause, number) => {
-                const currStackMessage = `${acc ? `${acc}\n` : ""}[Err_${
+                const currStackMessage = `${acc ? `${acc}\n` : ''}[Err_${
                     messageLength - number
                 }] ${cause.error_type} ${cause.message}`
                 return currStackMessage
             },
-            ""
+            ''
         )
         return stackMessages
     }

@@ -1,5 +1,8 @@
-export { t } from "./schema/t"
-export { Schema, transformer, validator } from "./schema"
-export type { SchemaShape, InferSchemaInputOutput } from "./schema"
-export type { Infer } from "./interface"
-export { MetalError } from "./error"
+export { t } from './schema/t'
+export { transformer, validator, Schema as MetalSchema } from './schema'
+export type {
+    SchemaShape as MetalSchemaShape,
+    InferSchemaInputOutput as InferMetalSchema,
+} from './schema'
+export type { Infer } from './interface'
+export { MetalError } from './error'
