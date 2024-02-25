@@ -89,6 +89,29 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
         private _label?: string,
         private readonly transformer?: Transformer<Input, Output>
     ) {
+        // Bind methods - only support basic parse method for performance reason
+        this.parse = this.parse.bind(this)
+        /** 
+         this.is = this.is.bind(this)
+         this.assert = this.assert.bind(this)
+         this.safeParse = this.safeParse.bind(this)
+         this.nullable = this.nullable.bind(this)
+         this.optional = this.optional.bind(this)
+         this.nullish = this.nullish.bind(this)
+         this.transform = this.transform.bind(this)
+         this.transformHard = this.transformHard.bind(this)
+         this.clone = this.clone.bind(this)
+         this.validate = this.validate.bind(this)
+         this.processTransformation = this.processTransformation.bind(this)
+         this.performValidate = this.performValidate.bind(this)
+         this.passValidationPipes = this.passValidationPipes.bind(this)
+         this.checkParseMode = this.checkParseMode.bind(this)
+         this.injectErrorStack = this.injectErrorStack.bind(this)
+         this.setSchemaType = this.setSchemaType.bind(this)
+         this.internalValidator = this.internalValidator.bind(this)
+         this.injectErrorStack = this.injectErrorStack.bind(this)
+        */
+
         this.$errorStack = new SchemaErrorStack()
     }
 
@@ -349,6 +372,7 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
         )
         cloned.isOptional = this.isOptional
         cloned.isNullable = this.isNullable
+        cloned.validationPipes.push(...this.validationPipes)
         return cloned
     }
 
@@ -464,10 +488,7 @@ export type SchemaShape = Schema<string, any, any>
 /**
  * @description Extract schema I/O type
  */
-export type InferSchemaInputOutput<T extends SchemaShape> = T extends Schema<
-    string,
-    infer Input,
-    infer Output
->
-    ? [Input, Output]
-    : never
+export type InferSchemaInputOutput<T extends SchemaShape> =
+    T extends Schema<string, infer Input, infer Output>
+        ? [Input, Output]
+        : never
