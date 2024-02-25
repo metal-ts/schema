@@ -16,8 +16,12 @@ export class UnionSchema<
 > extends Schema<"UNION", Input, Output> {
     constructor(private readonly _unionShape: Input) {
         const unionValidator: ValidationUnit<unknown> = (target, e) => {
-            const matchedUnionLocation = this._unionShape.findIndex((schema) =>
-                schema.is(target)
+            const matchedUnionLocation = this._unionShape.findIndex(
+                (schema) => {
+                    const res = schema.is(target)
+                    this.$errorStack.reset()
+                    return res
+                }
             )
             this.parseSelectedSchema = matchedUnionLocation
             const isValidUnion = matchedUnionLocation !== -1
@@ -48,6 +52,8 @@ export class UnionSchema<
     public override parse(
         target: unknown
     ): Infer<Schema<"UNION", Input, Output>> {
+        if (this.checkParseMode(target)) return target as Infer<Output>
+
         if (this.internalValidator(target, this.$errorStack)) {
             const parsed =
                 this._unionShape[this.parseSelectedSchema]!.parse(target)
@@ -80,5 +86,33 @@ export class UnionSchema<
         return this._unionShape.map((schema) =>
             schema.clone()
         ) as unknown as Input
+    }
+
+    public override clone(): UnionSchema<Input, Output> {
+        return new UnionSchema(this._unionShape)
+    }
+
+    public override optional(): UnionSchema<Input, Output | undefined> {
+        const optionalUnion = new UnionSchema<Input, Output | undefined>(
+            this._unionShape
+        )
+        this.setSchemaType(optionalUnion, "optional")
+        return optionalUnion
+    }
+
+    public override nullable(): UnionSchema<Input, Output | null> {
+        const nullableUnion = new UnionSchema<Input, Output | null>(
+            this._unionShape
+        )
+        this.setSchemaType(nullableUnion, "nullable")
+        return nullableUnion
+    }
+
+    public override nullish(): UnionSchema<Input, Output | null | undefined> {
+        const nullishUnion = new UnionSchema<Input, Output | null | undefined>(
+            this._unionShape
+        )
+        this.setSchemaType(nullishUnion, "nullish")
+        return nullishUnion
     }
 }
