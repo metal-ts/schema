@@ -90,4 +90,39 @@ describe(label.unit("MetalType - UnionSchema"), () => {
         expect(parsed2).toEqual(1)
         expect(parsed3).toEqual(true)
     })
+
+    it(label.case("should parse partial union -> strict"), () => {
+        const unionSchema = t.union(t.string, t.number).optional()
+        const parsed = unionSchema.parse("hello")
+        const parsed2 = unionSchema.parse(1)
+        const parsed3 = unionSchema.parse(undefined)
+
+        expect(parsed).toEqual("hello")
+        expect(parsed2).toEqual(1)
+        expect(parsed3).toEqual(undefined)
+    })
+
+    it(label.case("should parse nullable union -> strict"), () => {
+        const nullableUnion = t.union(t.string, t.number).nullable()
+        const parsed = nullableUnion.parse("hello")
+        const parsed2 = nullableUnion.parse(1)
+        const parsed3 = nullableUnion.parse(null)
+
+        expect(parsed).toEqual("hello")
+        expect(parsed2).toEqual(1)
+        expect(parsed3).toEqual(null)
+    })
+
+    it(label.case("should parse nullish union -> strict"), () => {
+        const nullishUnion = t.union(t.string, t.number).nullish()
+        const parsed = nullishUnion.parse("hello")
+        const parsed2 = nullishUnion.parse(1)
+        const parsed3 = nullishUnion.parse(null)
+        const parsed4 = nullishUnion.parse(undefined)
+
+        expect(parsed).toEqual("hello")
+        expect(parsed2).toEqual(1)
+        expect(parsed3).toEqual(null)
+        expect(parsed4).toEqual(undefined)
+    })
 })
