@@ -73,4 +73,41 @@ export class ArraySchema<
             shape: this.arrayShape.schemaDetail,
         }
     }
+    public override clone(): ArraySchema<Input, Output> {
+        return new ArraySchema<Input, Output>(this.arrayShape)
+    }
+
+    public override optional(): Schema<"ARRAY", Input[], Output[] | undefined> {
+        const optionalArray = new ArraySchema<Input, Output>(this.arrayShape)
+        this.setSchemaType(optionalArray, "optional")
+        return optionalArray as unknown as Schema<
+            "ARRAY",
+            Input[],
+            Output[] | undefined
+        >
+    }
+
+    public override nullable(): Schema<"ARRAY", Input[], Output[] | null> {
+        const nullableArray = new ArraySchema<Input, Output>(this.arrayShape)
+        this.setSchemaType(nullableArray, "nullable")
+        return nullableArray as unknown as Schema<
+            "ARRAY",
+            Input[],
+            Output[] | null
+        >
+    }
+
+    public override nullish(): Schema<
+        "ARRAY",
+        Input[],
+        Output[] | null | undefined
+    > {
+        const nullishArray = new ArraySchema<Input, Output>(this.arrayShape)
+        this.setSchemaType(nullishArray, "nullish")
+        return nullishArray as unknown as Schema<
+            "ARRAY",
+            Input[],
+            Output[] | null | undefined
+        >
+    }
 }
