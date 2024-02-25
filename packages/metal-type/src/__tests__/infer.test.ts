@@ -4,34 +4,98 @@ import { type Infer, t } from "../index"
 import { label } from "./utils/test.label"
 
 describe(label.unit("MetalType - Infer"), () => {
-    it(label.case("should infer hyper complex object"), () => {
-        const objectSchema = t.object({
-            hello: t.string,
-            world: t.number,
-            nested: t.object({
-                deeply: t.boolean,
-                union: t.union(t.string, t.number),
-                tuple: t.tuple([t.string, t.number]),
-                "depth2?": t.union(
-                    t.object({ hello: t.string }).optional(),
-                    t.number,
-                    t.array(t.string)
-                ),
-            }),
-        })
-        type ObjectSchema = Infer<typeof objectSchema>
-        type Expected = {
-            hello: string
-            world: number
-            nested: {
-                deeply: boolean
-                union: string | number
-                tuple: readonly [string, number]
-                depth2?: { hello: string } | number | string[] | undefined
+    it(
+        label.case("should infer object | partial object | deepPartial object"),
+        () => {
+            const ObjectSchema = t.object({
+                hello: t.string,
+                world: t.number,
+                nested: t.object({
+                    deeply: t.boolean,
+                    union: t.union(t.string, t.number.array),
+                    tuple: t.tuple([t.string, t.number]),
+                    "depth2?": t.union(
+                        t
+                            .object({
+                                "hello?": t.array(
+                                    t.union(
+                                        t.string,
+                                        t.object({
+                                            a: t.string,
+                                        })
+                                    )
+                                ),
+                                world: t.string,
+                            })
+                            .optional(),
+                        t.number,
+                        t.array(t.string)
+                    ),
+                }),
+            })
+            type ObjectSchema = Infer<typeof ObjectSchema>
+            type ObjExpected = {
+                hello: string
+                world: number
+                nested: {
+                    deeply: boolean
+                    union: string | number[]
+                    tuple: readonly [string, number]
+                    depth2?:
+                        | {
+                              hello?: (string | { a: string })[] | undefined
+                              world: string
+                          }
+                        | undefined
+                        | number
+                        | string[]
+                }
             }
+            expectType<TypeEqual<ObjectSchema, ObjExpected>>(true)
+
+            const PartialObject = ObjectSchema.partial()
+            type PartialObjectSchema = Infer<typeof PartialObject>
+            type PartialExpected = {
+                hello?: string
+                world?: number
+                nested?: {
+                    deeply: boolean
+                    union: string | number[]
+                    tuple: readonly [string, number]
+                    depth2?:
+                        | {
+                              hello?: (string | { a: string })[] | undefined
+                              world: string
+                          }
+                        | undefined
+                        | number
+                        | string[]
+                }
+            }
+            expectType<TypeEqual<PartialObjectSchema, PartialExpected>>(true)
+
+            const DeepPartialObject = ObjectSchema.deepPartial().strict()
+            type DeepPartialObjectSchema = Infer<typeof DeepPartialObject>
+            type Expected = {
+                hello?: string
+                world?: number
+                nested?: {
+                    deeply?: boolean
+                    union?: string | number[]
+                    tuple?: readonly [string, number]
+                    depth2?:
+                        | {
+                              hello?: (string | { a: string })[] | undefined
+                              world: string
+                          }
+                        | undefined
+                        | number
+                        | string[]
+                }
+            }
+            expectType<TypeEqual<DeepPartialObjectSchema, Expected>>(true)
         }
-        expectType<TypeEqual<ObjectSchema, Expected>>(true)
-    })
+    )
 
     it(label.case("should infer transformed object"), () => {
         const objectSchema = t.object({
@@ -49,13 +113,21 @@ describe(label.unit("MetalType - Infer"), () => {
                 "b?": t.array(
                     t.array(
                         t.array(
-                            t.object({
-                                hello: t.string,
-                                hi: t.boolean,
-                                b: t.array(
-                                    t.array(t.union(t.string, t.number))
-                                ),
-                            })
+                            t
+                                .object({
+                                    hello: t.string,
+                                    hi: t.boolean,
+                                    b: t.array(
+                                        t
+                                            .array(
+                                                t
+                                                    .union(t.string, t.number)
+                                                    .optional()
+                                            )
+                                            .optional()
+                                    ),
+                                })
+                                .deepPartial()
                         )
                     )
                 ),
@@ -72,9 +144,9 @@ describe(label.unit("MetalType - Infer"), () => {
                 tuple: readonly [string, number]
                 depth2?: { hello: string } | number | string[] | null
                 b?: {
-                    hello: string
-                    hi: boolean
-                    b: (string | number)[][]
+                    hello?: string
+                    hi?: boolean
+                    b?: ((string | number | undefined)[] | undefined)[]
                 }[][][]
             }
         }
