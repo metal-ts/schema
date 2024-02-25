@@ -13,7 +13,6 @@ const formatTypeSchema = (
     schema: SchemaInformation<string, unknown>
 ): string => {
     const { category, detail } = extractType(schema.type)
-
     const detailUnion = detail.length !== 0 ? ` | ${detail.join(" | ")}` : ""
     switch (category) {
         case "TUPLE": {
@@ -24,12 +23,17 @@ const formatTypeSchema = (
                 .join(", ")}]${detailUnion}`
         }
 
-        case "UNION":
-            return `${(
-                schema.shape as Array<SchemaInformation<string, unknown>>
-            )
-                .map(formatTypeSchema)
-                .join(" | ")}${detailUnion}`
+        case "UNION": {
+            if (!Array.isArray(schema.shape)) {
+                return schema.shape as string
+            }
+
+            const union = `${schema.shape.map(formatTypeSchema).join(" | ")}`
+
+            return union.includes(detailUnion.replaceAll("|", "").trim())
+                ? union
+                : `${union}${detailUnion}`
+        }
 
         case "OBJECT": {
             const shapes = schema.shape as Record<
@@ -48,11 +52,11 @@ const formatTypeSchema = (
             return `{${objectShape.join(", ")}}${detailUnion}`
         }
 
-        case "ARRAY":
+        case "ARRAY": {
             return `Array<${formatTypeSchema(
                 schema.shape as SchemaInformation<string, unknown>
             )}>${detailUnion}`
-
+        }
         // case "MAP":
         //     return `Map<${formatTypeSchema(
         //         schema.shape.key
@@ -62,11 +66,24 @@ const formatTypeSchema = (
         //     return `Set<${formatTypeSchema(schema.shape.value)}>`
         default: {
             if (schema.type.includes("LITERAL")) {
-                return `"${schema.type
-                    .replace("LITERAL", "")
-                    .replace("<", "")
-                    .replace(">", "")}"`
+                const extractLiteralType = (schemaType: string): string =>
+                    `"${schemaType
+                        .replace("LITERAL", "")
+                        .replace("<", "")
+                        .replace(">", "")}"`
+
+                if (schema.type.includes("|")) {
+                    const [literal, ...unions] = schema.type
+                        .split("|")
+                        .map((e) => e.trim())
+                    const dedupeUnions = [...new Set(unions)]
+                    if (literal && unions)
+                        return `${extractLiteralType(literal)} | ${dedupeUnions.map((e) => e.trim().toLowerCase()).join(" | ")}`
+                }
+
+                return extractLiteralType(schema.type)
             }
+
             return schema.type.toLowerCase()
         }
     }
