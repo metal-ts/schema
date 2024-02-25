@@ -1,3 +1,4 @@
+import type { SchemaNames } from "../interface"
 import { ArraySchema } from "./array"
 import { ObjectSchema } from "./object"
 import { PrimitiveSchema } from "./primitives"
@@ -38,6 +39,12 @@ class MetalType {
     public get never(): PrimitiveSchema<"NEVER", never, never> {
         return schema.never()
     }
+    public get date(): PrimitiveSchema<"DATE", Date, Date> {
+        return schema.date()
+    }
+    public get bigint(): PrimitiveSchema<"BIGINT", bigint, bigint> {
+        return schema.bigint()
+    }
     public literal = <const Literal extends string | number | boolean>(
         literal: Literal
     ): PrimitiveSchema<`LITERAL<${Literal}>`, Literal, Literal> =>
@@ -62,6 +69,12 @@ class MetalType {
         ...unionShape: UnionShape
     ): UnionSchema<UnionShape, UnionShape[number]> =>
         new UnionSchema<UnionShape, UnionShape[number]>(unionShape)
+
+    public custom = <Name extends SchemaNames, Input, Output = Input>(
+        name: Name,
+        validator: schema.ValidationUnit<unknown>
+    ): schema.Schema<Name, Input, Output> =>
+        new schema.Schema<Name, Input, Output>(name, validator)
 }
 
 export const t = MetalType.create()
