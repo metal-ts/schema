@@ -8,25 +8,25 @@
 
 ## Write schema with confidence
 
-1. Declarative api inspired by `zod`
-2. First class type-safety
-3. Error trackings and messages
-4. Fast to use - upto 5x faster than `zod`
-5. Small bundle size - 6.5kb
+1. **Declarative api** inspired by `zod`
+2. First class **type-safety**
+3. **Awesome error trackings and messages**
+4. **Fast** - up to 5x faster than `zod`
+5. **Small bundle size** - 3kb
 
 ## In a nutshell
 
-1. Define a schema
+1. Define a DTO(schema)
 
 ```ts
-import { t } from "metal-type"
+import { t } from 'metal-type'
 
 const People = t.object({
     name: t.string,
     age: t.number,
     isDeveloper: t.boolean,
-    friends: t.array(t.string),
-    address: t
+    'friends?': t.array(t.string),
+    'address?': t
         .object({
             street: t.string,
             city: t.string,
@@ -36,24 +36,24 @@ const People = t.object({
 })
 ```
 
-2. Parse data
+2. Parse unknown data
 
 ```ts
 const data = {
-    name: "John",
+    name: 'John',
     age: 42,
     isDeveloper: true,
-    friends: ["Jane", "Jack"],
+    friends: ['Jane', 'Jack'],
     address: {
-        street: "123 Main St",
-        city: "New York",
-        zip: "12345", // <- Error: Expected number, got string
+        street: '123 Main St',
+        city: 'New York',
+        zip: '12345', // <- Error: Expected number, got string
     },
 }
 const parsed = People.parse(data)
 ```
 
-3. Check errors
+3. Check parsing errors
 
 ```
 VALIDATION: [Err_1] object_value_error
@@ -62,7 +62,7 @@ VALIDATION: [Err_1] object_value_error
     name: string,
     age: number,
     isDeveloper: boolean,
-    friends: Array<string>,
+    friends: Array<string> | undefined,
     address: {
        street: string,
        city: string,
@@ -112,15 +112,15 @@ How easy is that?
 4. Infer schema types
 
 ```ts
-import { Infer } from "metal-type"
+import { Infer } from 'metal-type'
 type People = Infer<typeof People>
 /**
  * type People = {
  *     name: string;
  *     age: number;
  *     isDeveloper: boolean;
- *     friends: string[];
- *     address: {
+ *     friends?: string[];
+ *     address?: {
  *         street: string;
  *         city: string;
  *         zip: number;
