@@ -117,4 +117,7 @@ export class TupleSchema<
             shape: this.tupleShape.map((schema) => schema.schemaDetail),
         }
     }
+    public override clone(): TupleSchema<Input, Output> {
+        return new TupleSchema(this.tupleShape)
+    }
 }
