@@ -200,20 +200,19 @@ export class ObjectSchema<
         ).reduce<ObjectSchemaRecord>((newSchema, [key, schemaValue]) => {
             if (key.endsWith("?")) {
                 const optionalRemovedKey = key.slice(0, -1)
-                if (schemaValue?.isOptional && schemaValue.isNullable) {
-                    // optional & nullable
+                // already optional
+                if (schemaValue?.isOptional) return newSchema
+
+                // already optional & nullable
+                if (schemaValue?.isNullable && schemaValue?.isOptional)
                     return newSchema
-                } else if (schemaValue?.isNullable && !schemaValue.isOptional) {
+
+                if (schemaValue?.isNullable && !schemaValue?.isOptional) {
                     // nullable only
-                    newSchema[optionalRemovedKey] = schemaValue.nullish()
-                    return newSchema
-                } else if (
-                    !schemaValue?.isNullable &&
-                    schemaValue?.isOptional
-                ) {
-                    // optional only -> skip
+                    newSchema[optionalRemovedKey] = schemaValue?.nullish()
                     return newSchema
                 }
+
                 newSchema[optionalRemovedKey] = schemaValue?.optional()
                 return newSchema
             }
