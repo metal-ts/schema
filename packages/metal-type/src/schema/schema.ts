@@ -260,7 +260,7 @@ export class Schema<Name extends SchemaNames, Input, Output = Input> {
         }
     }
 
-    private checkParseMode(target: unknown): boolean {
+    protected checkParseMode(target: unknown): boolean {
         if (this.isOptional && target === undefined) return true
         if (this.isNullable && target === null) return true
         if (

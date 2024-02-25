@@ -1,6 +1,8 @@
 import { MetalError } from "../error"
 import type { PRIMITIVE_SCHEMA_NAMES } from "../interface/schema.names"
+import { prettyPrint } from "../utils"
 import { Schema, type ValidationUnit } from "./schema"
+import { ArraySchema } from "."
 
 export class PrimitiveSchema<
     Name extends PRIMITIVE_SCHEMA_NAMES,
@@ -9,6 +11,16 @@ export class PrimitiveSchema<
 > extends Schema<Name, Input, Output> {
     constructor(name: Name, internalValidator: ValidationUnit<unknown>) {
         super(name, internalValidator)
+    }
+    public get array(): ArraySchema<this, this> {
+        return new ArraySchema<this, this>(this)
+    }
+
+    public override clone(): PrimitiveSchema<Name, Input, Output> {
+        return new PrimitiveSchema<Name, Input, Output>(
+            this.name,
+            this.internalValidator
+        )
     }
 }
 
@@ -25,7 +37,7 @@ const literal = <const Literal extends string | number | boolean>(
                     message: MetalError.formatTypeError(
                         "literal",
                         target,
-                        `input ${target} must be ${String(literal)}`
+                        `input ${prettyPrint(target)} must be ${String(literal)}`
                     ),
                 })
             }
@@ -51,7 +63,7 @@ const string = createPrimitives<"STRING", string, string>(
                 message: MetalError.formatTypeError(
                     "string",
                     target,
-                    `${target} is ${typeof target}`
+                    `${prettyPrint(target)} is ${typeof target}`
                 ),
             })
         }
@@ -69,7 +81,7 @@ const number = createPrimitives<"NUMBER", number, number>(
                 message: MetalError.formatTypeError(
                     "number",
                     target,
-                    `${target} is ${typeof target}`
+                    `${prettyPrint(target)} is ${typeof target}`
                 ),
             })
         }
@@ -85,7 +97,7 @@ const date = createPrimitives<"DATE", Date, Date>("DATE", (target, e) => {
             message: MetalError.formatTypeError(
                 "date",
                 target,
-                `${target} is ${typeof target}`
+                `${prettyPrint(target)} is ${typeof target}`
             ),
         })
     }
@@ -102,7 +114,7 @@ const bigint = createPrimitives<"BIGINT", bigint, bigint>(
                 message: MetalError.formatTypeError(
                     "bigint",
                     target,
-                    `${target} is ${typeof target}`
+                    `${prettyPrint(target)} is ${typeof target}`
                 ),
             })
         }
@@ -120,7 +132,7 @@ const boolean = createPrimitives<"BOOLEAN", boolean, boolean>(
                 message: MetalError.formatTypeError(
                     "boolean",
                     target,
-                    `${target} is ${typeof target}`
+                    `${prettyPrint(target)} is ${typeof target}`
                 ),
             })
         }
@@ -137,7 +149,7 @@ const symbol: () => PrimitiveSchema<"SYMBOL", symbol, symbol> =
                 message: MetalError.formatTypeError(
                     "symbol",
                     target,
-                    `${target} is ${typeof target}`
+                    `${prettyPrint(target)} is ${typeof target}`
                 ),
             })
         }
@@ -154,7 +166,7 @@ const _undefined = createPrimitives<"UNDEFINED", undefined, undefined>(
                 message: MetalError.formatTypeError(
                     "undefined",
                     target,
-                    `${target} is ${typeof target}`
+                    `${prettyPrint(target)} is ${typeof target}`
                 ),
             })
         }
@@ -170,7 +182,7 @@ const _null = createPrimitives<"NULL", null, null>("NULL", (target, e) => {
             message: MetalError.formatTypeError(
                 "null",
                 target,
-                `${target} is ${typeof target}`
+                `${prettyPrint(target)} is ${typeof target}`
             ),
         })
     }
@@ -191,7 +203,7 @@ const never = createPrimitives<"NEVER", never, never>("NEVER", (target, e) => {
         message: MetalError.formatTypeError(
             "never",
             target,
-            `${target} is ${typeof target}`
+            `${prettyPrint(target)} is ${typeof target}`
         ),
     })
     return false
